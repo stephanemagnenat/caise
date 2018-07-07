@@ -62,7 +62,7 @@ async def register(websocket):
 	# TODO: check for name duplications
 	player = Player(name, state.next_gameobject_id)
 	player.pos[1] = 10
-	websocket.send(message_player_welcome(player))
+	await websocket.send(message_player_welcome(player))
 	state.next_gameobject_id += 1
 	# send the current state to this player
 	if state.ball:
