@@ -14,12 +14,59 @@ import numpy as np
 
 logging.basicConfig(level=logging.DEBUG)
 
+# game constants
+
+UPDATE_PERIOD = 0.05
+
+WORLD_CIRCLE_RADIUS = 50
+WORLD_PASSAGEWAY_MARGIN = 15
+WORLD_SIDE_WIDTH = 20
+WORLD_HALF_SIZE_X = WORLD_CIRCLE_RADIUS + WORLD_SIDE_WIDTH
+WORLD_HALF_SIZE_Y = WORLD_CIRCLE_RADIUS
+WORLD_PASSAGEWAY_HALF_WIDTH = WORLD_HALF_SIZE_Y - WORLD_PASSAGEWAY_MARGIN
+
+TIME_BETWEEN_FIRE = 1
+
+DIST_TO_HIT = 20
+
 # game classes
+
+def clip_field(pos, mx, my):
+	# if wrong quadrant, return
+	if mx * pos[0] < 0 or my * pos[1] < 0:
+		return
+	test_pos = pos * [mx, my]
+	# in side area, return
+	if test_pos[0] >= WORLD_CIRCLE_RADIUS:
+		return
+	# in passageway area, return
+	if test_pos[1] <= WORLD_PASSAGEWAY_HALF_WIDTH:
+		return
+	# in circle, return
+	test_pos_length = np.linalg.norm(test_pos)
+	if test_pos_length <= WORLD_CIRCLE_RADIUS:
+		return
+	# clipping must happen, see what is closest
+	dist_side = WORLD_CIRCLE_RADIUS - test_pos[0]
+	assert dist_side > 0
+	dist_passageway = test_pos[1] - WORLD_PASSAGEWAY_HALF_WIDTH
+	assert dist_passageway > 0
+	dist_circle = test_pos_length - WORLD_CIRCLE_RADIUS
+	assert dist_circle > 0
+	min_penetration_method = np.argmin([dist_side, dist_passageway, dist_circle])
+	if min_penetration_method == 0:
+		pos[0] = WORLD_CIRCLE_RADIUS * mx
+	elif min_penetration_method == 1:
+		pos[1] = WORLD_PASSAGEWAY_HALF_WIDTH * my
+	elif min_penetration_method == 2:
+		pos[:] = pos * WORLD_CIRCLE_RADIUS / test_pos_length
+	else:
+		assert False
 
 class Player:
 	def __init__(self, name):
 		self.name = name
-		self.pos = np.ones(2) * WORLD_SIZE / 2
+		self.pos = np.zeros(2)
 		self.hits = 0
 		self.speed = np.zeros(2)
 		self.last_fire_time = time.time()
@@ -30,7 +77,12 @@ class Player:
 	def step(self, dt):
 		# return true if clipping occurs
 		self.pos += self.speed * dt
-		new_pos = np.clip(self.pos, 0, WORLD_SIZE)
+		# clip external rectangle
+		new_pos = np.clip(self.pos, [-WORLD_HALF_SIZE_X, -WORLD_HALF_SIZE_Y], [WORLD_HALF_SIZE_X, WORLD_HALF_SIZE_Y])
+		# clip internal
+		for my in [-1,1]:
+			for mx in [-1,1]:
+					clip_field(new_pos, mx, my)
 		if not np.array_equal(new_pos, self.pos):
 			self.pos = new_pos
 			self.speed[:] = [0,0]
@@ -40,16 +92,6 @@ class Player:
 # game state
 
 players = {}
-
-# game constants
-
-UPDATE_PERIOD = 0.05
-
-WORLD_SIZE = 200
-
-TIME_BETWEEN_FIRE = 1
-
-DIST_TO_HIT = 20
 
 # network processing methods
 

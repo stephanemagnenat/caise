@@ -11,7 +11,7 @@
 			Name: <input type="text" id="nameinput">
 		</form>
 		<div class="connect button">Connect</div>
-		<canvas id="myCanvas" width="400" height="400"></canvas>
+		<canvas id="myCanvas" width="560" height="400"></canvas>
 		<textarea id="logArea" rows="10" cols="80"></textarea>
 		<script>
 			var connect = document.querySelector('.connect'),
@@ -27,18 +27,29 @@
 
 			// setup renderer state
 			ctx.strokeStyle = 'rgb(0,0,0)';
+			ctx.fillStyle = 'rgb(220,220,220)';
 			ctx.textAlign = "center";
 
 			// render the canvas
 			function render(timestamp) {
 				// draw animation and update movements
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				ctx.fillStyle = 'rgb(220,220,220)';
+				ctx.fillRect(0, 0, 80, 400);
+				ctx.beginPath();
+                ctx.arc(280,200,200,0,2*Math.PI);
+                ctx.fill();
+                ctx.fillRect(80, 60, 400, 280);
+				ctx.fillRect(480, 0, 80, 400);
+				ctx.fillStyle = 'rgb(0,0,0)';
 				for (const [name, data] of Object.entries(players)) {
+                    var x = data.pos[0]*4 + 280
+                    var y = data.pos[1]*4 + 200
 					ctx.beginPath();
-					ctx.arc(data.pos[0]*2, data.pos[1]*2, 8, 0, 2 * Math.PI);
+					ctx.arc(x, y, 8, 0, 2 * Math.PI);
 					ctx.stroke();
-					ctx.fillText(name, data.pos[0]*2, data.pos[1]*2+20);
-					ctx.fillText(data.hits, data.pos[0]*2, data.pos[1]*2-14);
+					ctx.fillText(name, x, y+20);
+					ctx.fillText(data.hits, x, y-14);
 					if (lastRenderTimestamp) {
 						// handle animations
 						var deltaTime = (timestamp - lastRenderTimestamp) / 1000.;
@@ -47,7 +58,7 @@
 						if (data.score_anim && data.score_anim > 0) {
 							ctx.strokeStyle = 'rgb(255,0,0)';
 							ctx.beginPath();
-							ctx.arc(data.pos[0]*2, data.pos[1]*2, 16-data.score_anim*16, 0, 2 * Math.PI);
+							ctx.arc(x, y, 16-data.score_anim*16, 0, 2 * Math.PI);
 							ctx.stroke();
 							ctx.strokeStyle = 'rgb(0,0,0)';
 							data.score_anim -= deltaTime;
