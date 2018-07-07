@@ -20,9 +20,10 @@
 				canvas = document.getElementById("myCanvas"),
 				ctx = canvas.getContext("2d"),
 				logArea = document.getElementById('logArea'),
-				players = {},
+				objects = {},
 				websocket = null,
-				lastRenderTimestamp = null
+				lastRenderTimestamp = null,
+				my_id = null
 			;
 
 			// setup renderer state
@@ -37,19 +38,30 @@
 				ctx.fillStyle = 'rgb(220,220,220)';
 				ctx.fillRect(0, 0, 80, 400);
 				ctx.beginPath();
-                ctx.arc(280,200,200,0,2*Math.PI);
-                ctx.fill();
-                ctx.fillRect(80, 60, 400, 280);
+				ctx.arc(280,200,200,0,2*Math.PI);
+				ctx.fill();
+				ctx.fillRect(80, 60, 400, 280);
 				ctx.fillRect(480, 0, 80, 400);
 				ctx.fillStyle = 'rgb(0,0,0)';
-				for (const [name, data] of Object.entries(players)) {
-                    var x = data.pos[0]*4 + 280
-                    var y = data.pos[1]*4 + 200
-					ctx.beginPath();
-					ctx.arc(x, y, 8, 0, 2 * Math.PI);
-					ctx.stroke();
-					ctx.fillText(name, x, y+20);
-					ctx.fillText(data.hits, x, y-14);
+				for (const [id, data] of Object.entries(objects)) {
+					var x = data.pos[0]*4 + 280
+					var y = data.pos[1]*4 + 200
+					
+					if (data.object === 'ball') {
+						ctx.fillStyle = 'rgb(131,123,0)';
+						ctx.beginPath();
+						ctx.arc(x, y, 2, 0, 2 * Math.PI);
+						ctx.fill();
+					}
+					else if (data.object === 'player') {
+						ctx.strokeStyle = 'rgb(0,0,0)';
+						ctx.beginPath();
+						ctx.arc(x, y, 4, 0, 2 * Math.PI);
+						ctx.stroke();
+						ctx.fillStyle = 'rgb(0,0,0)';
+						ctx.fillText(data.name, x, y+20);
+						ctx.fillText(data.hits, x, y-14);
+					}
 					if (lastRenderTimestamp) {
 						// handle animations
 						var deltaTime = (timestamp - lastRenderTimestamp) / 1000.;
@@ -60,7 +72,6 @@
 							ctx.beginPath();
 							ctx.arc(x, y, 16-data.score_anim*16, 0, 2 * Math.PI);
 							ctx.stroke();
-							ctx.strokeStyle = 'rgb(0,0,0)';
 							data.score_anim -= deltaTime;
 						}
 					}
@@ -78,24 +89,35 @@
 				websocket.onmessage = function (event) {
 					data = JSON.parse(event.data);
 					switch (data.type) {
-						case 'player_new':
-							logArea.textContent += data.name + " connected\n";
-							players[data.name] = { "pos": data.pos, "speed": data.speed, "hits": data.hits };
+						case 'player_welcome':
+							my_id = data.id;
 							break;
-						case 'player_state':
-							var player = players[data.name];
-							// if hits were improved, set animation
-							if (data.hits > player.hits) {
-								players[data.name].score_anim = 1;
+						case 'object_new':
+							objects[data.id] = data;
+							if (data.object === 'player') {
+								logArea.textContent += data.name + " connected\n";
 							}
-							// update variables
-							player.pos = data.pos;
-							player.speed = data.speed;
-							player.hits = data.hits;
 							break;
-						case 'player_part':
-							logArea.textContent += data.name + " disconnected\n";
-							delete players[data.name];
+						case 'object_state':
+							var object = objects[data.id];
+							// update variables
+							object.pos = data.pos;
+							object.speed = data.speed;
+							if (object.object === 'player') {
+								// if hits were improved, set animation
+								if (data.hits > object.hits) {
+									object.score_anim = 1;
+								}
+								// update variables
+								object.hits = data.hits;
+							}
+							break;
+						case 'object_part':
+							var object = objects[data.id];
+							if (object.object === 'player') {
+								logArea.textContent += data.name + " disconnected\n";
+							}
+							delete players[data.id];
 							break;
 						default:
 							console.error("unsupported event", data);
@@ -105,19 +127,22 @@
 
 			document.onkeydown = function (event) {
 				if (event.key === "ArrowRight") {
-					websocket.send(JSON.stringify({action: 'move', speed: [10,0]}));
+					websocket.send(JSON.stringify({action: 'move', speed: [100,0]}));
 				}
 				else if (event.key === "ArrowLeft") {
-					websocket.send(JSON.stringify({action: 'move', speed: [-10,0]}));
+					websocket.send(JSON.stringify({action: 'move', speed: [-100,0]}));
 				}
 				else if (event.key === "ArrowUp") {
-					websocket.send(JSON.stringify({action: 'move', speed: [0,-10]}));
+					websocket.send(JSON.stringify({action: 'move', speed: [0,-100]}));
 				}
 				else if (event.key === "ArrowDown") {
-					websocket.send(JSON.stringify({action: 'move', speed: [0,10]}));
+					websocket.send(JSON.stringify({action: 'move', speed: [0,100]}));
 				}
 				else if (event.key === " ") {
-					websocket.send(JSON.stringify({action: 'fire'}));
+					websocket.send(JSON.stringify({action: 'weapon_trigger'}));
+				}
+				else if (event.key === "x") {
+					websocket.send(JSON.stringify({action: 'power_trigger'}));
 				}
 			}
 

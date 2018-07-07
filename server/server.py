@@ -10,113 +10,37 @@ import websockets
 import time
 import numpy as np
 
+from constants import *
+from gameobjects import *
+
 # enable logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-# game constants
-
-UPDATE_PERIOD = 0.05
-
-WORLD_CIRCLE_RADIUS = 50
-WORLD_PASSAGEWAY_MARGIN = 15
-WORLD_SIDE_WIDTH = 20
-WORLD_HALF_SIZE_X = WORLD_CIRCLE_RADIUS + WORLD_SIDE_WIDTH
-WORLD_HALF_SIZE_Y = WORLD_CIRCLE_RADIUS
-WORLD_PASSAGEWAY_HALF_WIDTH = WORLD_HALF_SIZE_Y - WORLD_PASSAGEWAY_MARGIN
-
-TIME_BETWEEN_FIRE = 1
-
-DIST_TO_HIT = 20
-
-# game classes
-
-def clip_field(pos, mx, my):
-	# if wrong quadrant, return
-	if mx * pos[0] < 0 or my * pos[1] < 0:
-		return
-	test_pos = pos * [mx, my]
-	# in side area, return
-	if test_pos[0] >= WORLD_CIRCLE_RADIUS:
-		return
-	# in passageway area, return
-	if test_pos[1] <= WORLD_PASSAGEWAY_HALF_WIDTH:
-		return
-	# in circle, return
-	test_pos_length = np.linalg.norm(test_pos)
-	if test_pos_length <= WORLD_CIRCLE_RADIUS:
-		return
-	# clipping must happen, see what is closest
-	dist_side = WORLD_CIRCLE_RADIUS - test_pos[0]
-	assert dist_side > 0
-	dist_passageway = test_pos[1] - WORLD_PASSAGEWAY_HALF_WIDTH
-	assert dist_passageway > 0
-	dist_circle = test_pos_length - WORLD_CIRCLE_RADIUS
-	assert dist_circle > 0
-	min_penetration_method = np.argmin([dist_side, dist_passageway, dist_circle])
-	if min_penetration_method == 0:
-		pos[0] = WORLD_CIRCLE_RADIUS * mx
-	elif min_penetration_method == 1:
-		pos[1] = WORLD_PASSAGEWAY_HALF_WIDTH * my
-	elif min_penetration_method == 2:
-		pos[:] = pos * WORLD_CIRCLE_RADIUS / test_pos_length
-	else:
-		assert False
-
-class Player:
-	def __init__(self, name):
-		self.name = name
-		self.pos = np.zeros(2)
-		self.hits = 0
-		self.speed = np.zeros(2)
-		self.last_fire_time = time.time()
-
-	def move(self, speed):
-		self.speed = np.array(speed)
-
-	def step(self, dt):
-		# return true if clipping occurs
-		self.pos += self.speed * dt
-		# clip external rectangle
-		new_pos = np.clip(self.pos, [-WORLD_HALF_SIZE_X, -WORLD_HALF_SIZE_Y], [WORLD_HALF_SIZE_X, WORLD_HALF_SIZE_Y])
-		# clip internal
-		for my in [-1,1]:
-			for mx in [-1,1]:
-					clip_field(new_pos, mx, my)
-		if not np.array_equal(new_pos, self.pos):
-			self.pos = new_pos
-			self.speed[:] = [0,0]
-			return True
-		return False
-
 # game state
 
 players = {}
-
-# network processing methods
+boxes = {}
+ball = Ball(0)
+next_gameobject_id = 1
 
 ## message building
 
-def message_player_new(player):
-	return json.dumps({
-		'type': 'player_new',
-		'name': player.name,
-		'pos': player.pos.tolist(),
-		'speed': player.speed.tolist(),
-		'hits': player.hits
-	})
+def message_object_new(gameobject):
+	message = gameobject.get_json_state(True)
+	message['type'] = 'object_new'
+	return json.dumps(message)
 
-def message_player_status(player):
-	return json.dumps({
-		'type': 'player_state',
-		'name': player.name,
-		'pos': player.pos.tolist(),
-		'speed': player.speed.tolist(),
-		'hits': player.hits
-	})
+def message_object_status(gameobject):
+	message = gameobject.get_json_state(False)
+	message['type'] = 'object_state'
+	return json.dumps(message)
 
-def message_player_part(player):
-	return json.dumps({'type': 'player_part', 'name': player.name})
+def message_object_part(gameobject):
+	return json.dumps({'type': 'object_part', 'id': gameobject.id})
+
+def message_player_welcome(player):
+	return json.dumps({'type': 'player_welcome', 'id': player.id})
 
 ## notification helper methods
 
@@ -128,16 +52,21 @@ async def notify_players(source_player, messager_builder_function):
 ## network processing callbacks
 
 async def register(websocket):
+	global next_gameobject_id
 	# receive the name from this player
 	name = await websocket.recv()
-	player = Player(name)
+	# TODO: check for name duplications
+	player = Player(name, next_gameobject_id)
+	websocket.send(message_player_welcome(player))
+	next_gameobject_id += 1
 	# send the current state to this player
+	await websocket.send(message_object_new(ball))
 	for other_websocket, other_player in players.items():
-		await websocket.send(message_player_new(other_player))
+		await websocket.send(message_object_new(other_player))
 	# add to the list of players
 	players[websocket] = player
 	# tell all players about this new one
-	await notify_players(player, message_player_new)
+	await notify_players(player, message_object_new)
 	# print and return
 	print(f"> {name} connected")
 	return player
@@ -147,7 +76,7 @@ async def unregister(websocket):
 	player = players[websocket]
 	del players[websocket]
 	# tell others players about this disconnection
-	await notify_players(player, message_player_part)
+	await notify_players(player, message_object_part)
 	print(f"> {player.name} disconnected")
 
 ## client processing code
@@ -161,9 +90,9 @@ async def process_client(websocket, path):
 			data = json.loads(message)
 			if data['action'] == 'move':
 				# set the speed of the player
-				player.move(data['speed'])
-				await notify_players(player, message_player_status)
-			elif data['action'] == 'fire':
+				player.move(data['speed'], 0.1)
+				await notify_players(player, message_object_status)
+			elif data['action'] == 'weapon_trigger':
 				cur_time = time.time()
 				if cur_time - player.last_fire_time < TIME_BETWEEN_FIRE:
 					# we are not allowed to fire
@@ -182,8 +111,10 @@ async def process_client(websocket, path):
 						other_player.last_fire_time = cur_time
 				# if we did hit, update the client
 				if did_hit:
-					await notify_players(player, message_player_status)
+					await notify_players(player, message_object_status)
 				player.last_fire_time = cur_time
+			elif data['action'] == 'power_trigger':
+				logging.info("Got power trigger, unimplemented yet")
 			else:
 				logging.error("unsupported event: {}", data)
 	finally:
@@ -200,7 +131,7 @@ async def run_state():
 			#print (player.pos)
 			#print (player.speed)
 			if player.step(cur_time - last_time):
-				await notify_players(player, message_player_status)
+				await notify_players(player, message_object_status)
 		last_time = cur_time
 		await asyncio.sleep(UPDATE_PERIOD)
 
