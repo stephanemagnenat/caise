@@ -3,6 +3,8 @@ var c;
 
 var field;
 var camera;
+var player;
+var websocketManager;
 
 
 jQuery(document).ready(function() {
