@@ -9,7 +9,6 @@ Scenes.load = function() {
 
 
     // Scene that is shown when loading is over
-    SceneManager.SCENE_AFTER_LOADING = DemoMenuScene;
-    // SceneManager.SCENE_AFTER_LOADING = IngameScene;
+    SceneManager.SCENE_AFTER_LOADING = IngameScene;
 
 };

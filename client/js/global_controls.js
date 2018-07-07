@@ -17,10 +17,6 @@ GlobalControls.loadCustomBehavior = function()  {
         Game.toggleFullScreen();
     });
 
-    Keyboard.registerKeyUpHandler(Keyboard.P, function() {
-        Game.pauseUnpause();
-    });
-
     Keyboard.registerKeyUpHandler(Keyboard.M, function() {
         Sound.muteUnmute();
     });

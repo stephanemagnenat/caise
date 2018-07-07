@@ -1,7 +1,8 @@
 var canvas;
 var c;
 
-var demo;
+var field;
+var camera;
 
 
 jQuery(document).ready(function() {
