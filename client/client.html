@@ -46,14 +46,8 @@
 				for (const [id, data] of Object.entries(objects)) {
 					var x = data.pos[0]*4 + 280
 					var y = data.pos[1]*4 + 200
-					
-					if (data.object === 'ball') {
-						ctx.fillStyle = 'rgb(131,123,0)';
-						ctx.beginPath();
-						ctx.arc(x, y, 2, 0, 2 * Math.PI);
-						ctx.fill();
-					}
-					else if (data.object === 'player') {
+
+					if (data.object === 'player') {
 						ctx.strokeStyle = 'rgb(0,0,0)';
 						ctx.beginPath();
 						ctx.arc(x, y, 4, 0, 2 * Math.PI);
@@ -61,6 +55,12 @@
 						ctx.fillStyle = 'rgb(0,0,0)';
 						ctx.fillText(data.name, x, y+20);
 						ctx.fillText(data.hits, x, y-14);
+					}
+					if (data.object === 'ball' || (data.object === 'player' && data.has_ball)) {
+						ctx.fillStyle = 'rgb(131,123,0)';
+						ctx.beginPath();
+						ctx.arc(x, y, 2, 0, 2 * Math.PI);
+						ctx.fill();
 					}
 					if (lastRenderTimestamp) {
 						// handle animations
@@ -110,6 +110,7 @@
 								}
 								// update variables
 								object.hits = data.hits;
+								object.has_ball = data.has_ball;
 							}
 							break;
 						case 'object_part':
@@ -117,7 +118,7 @@
 							if (object.object === 'player') {
 								logArea.textContent += data.name + " disconnected\n";
 							}
-							delete players[data.id];
+							delete objects[data.id];
 							break;
 						default:
 							console.error("unsupported event", data);
@@ -137,6 +138,9 @@
 				}
 				else if (event.key === "ArrowDown") {
 					websocket.send(JSON.stringify({action: 'move', speed: [0,100]}));
+				}
+				else if (event.key === "s") {
+					websocket.send(JSON.stringify({action: 'move', speed: [0,0]}));
 				}
 				else if (event.key === " ") {
 					websocket.send(JSON.stringify({action: 'weapon_trigger'}));

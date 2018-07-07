@@ -48,10 +48,10 @@ class GameObject(ABC):
 		self.pos = np.zeros(2)
 		self.speed = np.zeros(2)
 		super().__init__()
-	
+
 	def move(self, speed, factor):
 		self.speed = np.array(speed) * factor
-	
+
 	def step(self, dt):
 		# return true if clipping occurs
 		self.pos += self.speed * dt
@@ -66,11 +66,21 @@ class GameObject(ABC):
 			self.speed[:] = [0,0]
 			return True
 		return False
-	
+
+	def does_collide(self, other, deinterlace_vector = None):
+		""" Return whether there is collision with other, if so and interlace_vector is given, fill it with how to move self to deinterlace """
+		delta_pos = self.pos - other.pos
+		sum_r = other.r + self.r
+		cur_dist = np.linalg.norm(delta_pos)
+		is_collision = cur_dist < sum_r
+		if is_collision and deinterlace_vector is not None:
+			deinterlace_vector[:] = delta_pos * (sum_r - cur_dist) / cur_dist
+		return is_collision
+
 	@abstractmethod
 	def get_object_type(self):
 		pass
-	
+
 	def get_json_state(self, full):
 		json_state = {
 			'id': self.id,
@@ -84,8 +94,8 @@ class GameObject(ABC):
 
 class Ball(GameObject):
 	def __init__(self, id):
-		GameObject.__init__(self, id, 1)
-	
+		GameObject.__init__(self, id, 0.9)
+
 	def get_object_type(self):
 		return "ball"
 
@@ -93,7 +103,7 @@ class Ball(GameObject):
 class Box(GameObject):
 	def __init__(self, id):
 		GameObject.__init__(self, id, 1)
-	
+
 	def get_object_type(self):
 		return "box"
 
@@ -101,24 +111,26 @@ class Box(GameObject):
 class SuperBox(GameObject):
 	def __init__(self, id):
 		GameObject.__init__(self, id, 1.5)
-	
+
 	def get_object_type(self):
 		return "superbox"
 
 
 class Player(GameObject):
 	def __init__(self, name, id):
-		GameObject.__init__(self, id, 2)
+		GameObject.__init__(self, id, 1.5)
 		self.name = name
+		self.has_ball = False
 		self.hits = 0
 		self.last_fire_time = time.time()
-	
+
 	def get_object_type(self):
 		return "player"
-	
+
 	def get_json_state(self, full):
 		json_state = super(Player, self).get_json_state(full)
 		if full:
 			json_state['name'] = self.name
+		json_state['has_ball'] = self.has_ball
 		json_state['hits'] = self.hits
 		return json_state
