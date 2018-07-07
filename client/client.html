@@ -67,6 +67,10 @@
 						var deltaTime = (timestamp - lastRenderTimestamp) / 1000.;
 						data.pos[0] += data.speed[0] * deltaTime;
 						data.pos[1] += data.speed[1] * deltaTime;
+						if (data.speed_hl > 0) {
+							data.speed[0] *= Math.pow(2, -deltaTime / data.speed_hl);
+							data.speed[1] *= Math.pow(2, -deltaTime / data.speed_hl);
+						}
 						if (data.score_anim && data.score_anim > 0) {
 							ctx.strokeStyle = 'rgb(255,0,0)';
 							ctx.beginPath();
@@ -106,6 +110,7 @@
 							// update variables
 							object.pos = data.pos;
 							object.speed = data.speed;
+							object.speed_hl = data.speed_hl;
 							if (object.object === 'player') {
 								// if hits were improved, set animation
 								if (data.score > object.score) {

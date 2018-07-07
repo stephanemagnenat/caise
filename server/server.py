@@ -193,6 +193,7 @@ async def run_state():
 						u = unitv(deinterlace_vector)
 						state.ball.pos = player.pos + u * (player.r + state.ball.r + BALL_DROP_DIST)
 						state.ball.speed = player.speed + u * BALL_DROP_VELOCITY
+						state.ball.speed_hl = 2.
 					if other_had_ball:
 						other.has_ball = False
 						other.score -= 1
@@ -200,6 +201,7 @@ async def run_state():
 						u = unitv(deinterlace_vector)
 						state.ball.pos = other.pos + u * -(other.r + state.ball.r + BALL_DROP_DIST)
 						state.ball.speed = other.speed + u * -BALL_DROP_VELOCITY
+						state.ball.speed_hl = 2.
 
 					# notify when necessary
 					## ball creation

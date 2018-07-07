@@ -48,10 +48,14 @@ class GameObject(ABC):
 		self.r = r
 		self.pos = np.zeros(2)
 		self.speed = np.zeros(2)
+		self.speed_hl = 0
 
 	def step(self, dt, cur_time):
 		# return true if clipping occurs
 		self.pos += self.speed * dt
+		# if speed half life, apply
+		if self.speed_hl > 0:
+			self.speed *= np.power(2, -dt / self.speed_hl)
 		# clip external rectangle
 		new_pos = np.clip(self.pos, [-WORLD_HALF_SIZE_X, -WORLD_HALF_SIZE_Y], [WORLD_HALF_SIZE_X, WORLD_HALF_SIZE_Y])
 		# clip internal
@@ -61,6 +65,7 @@ class GameObject(ABC):
 		if not np.array_equal(new_pos, self.pos):
 			self.pos = new_pos
 			self.speed[:] = [0,0]
+			self.speed_hl = 0.
 			return True
 		return False
 
@@ -86,6 +91,7 @@ class GameObject(ABC):
 			'id': self.id,
 			'pos': _numpy_rounded(self.pos),
 			'speed': _numpy_rounded(self.speed),
+			'speed_hl': round(self.speed_hl, 3)
 		}
 		if full:
 			json_state['object'] = self.get_object_type()
