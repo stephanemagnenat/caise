@@ -54,7 +54,7 @@
 						ctx.stroke();
 						ctx.fillStyle = 'rgb(0,0,0)';
 						ctx.fillText(data.name, x, y+20);
-						ctx.fillText(data.hits, x, y-14);
+						ctx.fillText(data.score, x, y-14);
 					}
 					if (data.object === 'ball' || (data.object === 'player' && data.has_ball)) {
 						ctx.fillStyle = 'rgb(131,123,0)';
@@ -81,6 +81,9 @@
 			}
 
 			connect.onclick = function (event) {
+				// clear state
+				objects = {}
+				// connect to websocket
 				websocket = new WebSocket("ws://" + hostinput.value + ":6789/");
 				var name = nameinput.value;
 				websocket.onopen = function (event) {
@@ -105,11 +108,11 @@
 							object.speed = data.speed;
 							if (object.object === 'player') {
 								// if hits were improved, set animation
-								if (data.hits > object.hits) {
+								if (data.score > object.score) {
 									object.score_anim = 1;
 								}
 								// update variables
-								object.hits = data.hits;
+								object.score = data.score;
 								object.has_ball = data.has_ball;
 							}
 							break;

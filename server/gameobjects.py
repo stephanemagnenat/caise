@@ -43,16 +43,13 @@ def _numpy_rounded(v):
 
 class GameObject(ABC):
 	def __init__(self, id, r):
+		super().__init__()
 		self.id = id
 		self.r = r
 		self.pos = np.zeros(2)
 		self.speed = np.zeros(2)
-		super().__init__()
 
-	def move(self, speed, factor):
-		self.speed = np.array(speed) * factor
-
-	def step(self, dt):
+	def step(self, dt, cur_time):
 		# return true if clipping occurs
 		self.pos += self.speed * dt
 		# clip external rectangle
@@ -74,7 +71,10 @@ class GameObject(ABC):
 		cur_dist = np.linalg.norm(delta_pos)
 		is_collision = cur_dist < sum_r
 		if is_collision and deinterlace_vector is not None:
-			deinterlace_vector[:] = delta_pos * (sum_r - cur_dist) / cur_dist
+			if cur_dist == 0:
+				deinterlace_vector[:] = [sum_r, 0]
+			else:
+				deinterlace_vector[:] = delta_pos * (sum_r - cur_dist) / cur_dist
 		return is_collision
 
 	@abstractmethod
@@ -121,16 +121,33 @@ class Player(GameObject):
 		GameObject.__init__(self, id, 1.5)
 		self.name = name
 		self.has_ball = False
-		self.hits = 0
-		self.last_fire_time = time.time()
+		self.score = 0
+		self.last_time_stunned = 0.
+		self.speed_cmd = np.zeros(2)
+
+	def move(self, speed, factor):
+		self.speed_cmd = np.array(speed) * factor
+
+	def step(self, dt, cur_time):
+		# can we apply speed?
+		old_speed = self.speed
+		if not self.is_stunned(cur_time):
+			self.speed = self.speed_cmd
+		# do the step
+		need_update = super(Player, self).step(dt, cur_time)
+		# should we send update?
+		return need_update or not np.array_equal(old_speed, self.speed)
 
 	def get_object_type(self):
 		return "player"
+
+	def is_stunned(self, cur_time):
+		return cur_time - self.last_time_stunned < STUNNED_DURATION
 
 	def get_json_state(self, full):
 		json_state = super(Player, self).get_json_state(full)
 		if full:
 			json_state['name'] = self.name
 		json_state['has_ball'] = self.has_ball
-		json_state['hits'] = self.hits
+		json_state['score'] = self.score
 		return json_state

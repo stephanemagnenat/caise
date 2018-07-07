@@ -97,7 +97,6 @@ async def process_client(websocket, path):
 			if data['action'] == 'move':
 				# set the speed of the player
 				player.move(data['speed'], 0.1)
-				await notify_players(player, message_object_status)
 			elif data['action'] == 'weapon_trigger':
 				cur_time = time.time()
 				#if cur_time - player.last_fire_time < TIME_BETWEEN_FIRE:
@@ -111,8 +110,8 @@ async def process_client(websocket, path):
 					## if we hit the other
 					#if np.linalg.norm(other_player.pos - player.pos) < DIST_TO_HIT:
 						#did_hit = True
-						## increase our hits
-						#player.hits += 1
+						## increase our score
+						#player.score += 1
 						## disable fire for other
 						#other_player.last_fire_time = cur_time
 				## if we did hit, update the client
@@ -136,14 +135,14 @@ async def run_state():
 		delta_time = cur_time - last_time
 
 		# ball collision
-		if state.ball is not None and state.ball.step(delta_time):
+		if state.ball is not None and state.ball.step(delta_time, cur_time):
 			await notify_players(state.ball, message_object_status)
 
 		# loop over players
 		for websocket, player in state.players.items():
 
 			# collisions with walls
-			if player.step(delta_time):
+			if player.step(delta_time, cur_time):
 				await notify_players(player, message_object_status)
 
 			# ball fetching
@@ -155,55 +154,68 @@ async def run_state():
 				state.ball = None
 
 			# collision with other player
-			for _, other_player in state.players.items():
-				if player == other_player:
+			for _, other in state.players.items():
+				if player == other:
 					continue
 				deinterlace_vector = np.empty(2)
-				if player.does_collide(other_player, deinterlace_vector):
+				if player.does_collide(other, deinterlace_vector):
 
 					# save previous state
 					prev_player_pos = player.pos
-					prev_other_pos = other_player.pos
+					prev_other_pos = other.pos
+					prev_player_speed = player.speed
+					prev_other_speed = other.speed
 					prev_player_velocity = np.inner(player.speed, player.speed)
-					prev_other_velocity = np.inner(other_player.speed, other_player.speed)
-					had_ball = player.has_ball
-					other_had_ball = other_player.has_ball
+					prev_other_velocity = np.inner(other.speed, other.speed)
+					player_had_ball = player.has_ball
+					other_had_ball = other.has_ball
+					player_was_stunned = player.is_stunned(cur_time)
+					other_was_stunned = other.is_stunned(cur_time)
 
 					# handle deinterlacing
 					player.pos += deinterlace_vector * 0.5
-					other_player.pos -= deinterlace_vector * 0.5
+					other.pos -= deinterlace_vector * 0.5
 
-					# reduce speed
-					player.speed *= -0.5
-					other_player.speed *= -0.5
+					# apply collision, reduce speed and stun
+					player.speed = 0.5 * prev_other_speed
+					other.speed = 0.5 * prev_player_speed
+					player.speed_cmd = player.speed
+					other.speed_cmd = other.speed
 					player_velocity = np.inner(player.speed, player.speed)
-					other_velocity = np.inner(other_player.speed, other_player.speed)
+					other_velocity = np.inner(other.speed, other.speed)
+					player.last_time_stunned = other.last_time_stunned = time.time()
 
 					# loose ball
-					if had_ball:
+					if player_had_ball:
 						player.has_ball = False
+						player.score -= 1
 						state.ball = Ball(0)
 						u = unitv(deinterlace_vector)
 						state.ball.pos = player.pos + u * (player.r + state.ball.r + BALL_DROP_DIST)
 						state.ball.speed = u * BALL_DROP_VELOCITY
 					if other_had_ball:
-						other_player.has_ball = False
+						other.has_ball = False
+						other.score -= 1
 						state.ball = Ball(0)
 						u = unitv(deinterlace_vector)
-						state.ball.pos = other_player.pos + u * -(other_player.r + state.ball.r + BALL_DROP_DIST)
+						state.ball.pos = other.pos + u * -(other.r + state.ball.r + BALL_DROP_DIST)
 						state.ball.speed = u * -BALL_DROP_VELOCITY
 
 					# notify when necessary
-					if had_ball or other_had_ball:
+					## ball creation
+					if player_had_ball or other_had_ball:
 						await notify_players(state.ball, message_object_new)
-					if (had_ball or
-						np.linalg.norm(player.pos - prev_player_pos) > MIN_DIST_TO_NOTIFY or
+
+					### player state changed
+					if (player_had_ball or
+						dist(player.pos, prev_player_pos) > MIN_DIST_TO_NOTIFY or
 						abs(player_velocity - prev_player_velocity) > MIN_DELTA_VELOICTY_TO_NOTIFY):
 						await notify_players(player, message_object_status)
+					## other state changed
 					if (other_had_ball or
-						(np.linalg.norm(other_player.pos - prev_other_pos) > MIN_DIST_TO_NOTIFY) or
+						dist(other.pos, prev_other_pos) > MIN_DIST_TO_NOTIFY or
 						abs(other_velocity - prev_other_velocity) > MIN_DELTA_VELOICTY_TO_NOTIFY):
-						await notify_players(other_player, message_object_status)
+						await notify_players(other, message_object_status)
 		last_time = cur_time
 		await asyncio.sleep(UPDATE_PERIOD)
 
