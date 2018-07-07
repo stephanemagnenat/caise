@@ -179,8 +179,8 @@ async def run_state():
 					# apply collision, reduce speed and stun
 					player.speed = 0.5 * prev_other_speed
 					other.speed = 0.5 * prev_player_speed
-					player.speed_cmd = player.speed
-					other.speed_cmd = other.speed
+					#player.speed_cmd = player.speed
+					#other.speed_cmd = other.speed
 					player_velocity = np.inner(player.speed, player.speed)
 					other_velocity = np.inner(other.speed, other.speed)
 					player.last_time_stunned = other.last_time_stunned = time.time()
@@ -192,14 +192,14 @@ async def run_state():
 						state.ball = Ball(0)
 						u = unitv(deinterlace_vector)
 						state.ball.pos = player.pos + u * (player.r + state.ball.r + BALL_DROP_DIST)
-						state.ball.speed = u * BALL_DROP_VELOCITY
+						state.ball.speed = player.speed + u * BALL_DROP_VELOCITY
 					if other_had_ball:
 						other.has_ball = False
 						other.score -= 1
 						state.ball = Ball(0)
 						u = unitv(deinterlace_vector)
 						state.ball.pos = other.pos + u * -(other.r + state.ball.r + BALL_DROP_DIST)
-						state.ball.speed = u * -BALL_DROP_VELOCITY
+						state.ball.speed = other.speed + u * -BALL_DROP_VELOCITY
 
 					# notify when necessary
 					## ball creation
