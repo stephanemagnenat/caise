@@ -26,34 +26,35 @@ WebsocketManager.prototype.registerPlayerName = function() {
 
 
 WebsocketManager.prototype.processMessage = function(event) {
+
     let data = JSON.parse(event.data);
-    console.log(data);
+
     switch (data.type) {
+
         case "player_welcome" :
             this.id = data.id;
             break;
+
         case "object_new" :
+            if(data.object === "player") {
+                surpManager.addSurp(data);
+            } else {
+                console.log(data);
+            }
             /*objects[data.id] = data;
             if (data.object === 'player') {
                 logArea.textContent += data.name + " connected\n";
             }*/
             break;
-        /*case 'object_state':
-            var object = objects[data.id];
-            // update variables
-            object.pos = data.pos;
-            object.speed = data.speed;
-            if (object.object === 'player') {
-                // if hits were improved, set animation
-                if (data.score > object.score) {
-                    object.score_anim = 1;
-                }
-                // update variables
-                object.score = data.score;
-                object.has_ball = data.has_ball;
+
+        case "object_state":
+            if(surpManager.isSurp(data.id)) {
+                surpManager.updateSurp(data.id, data);
+            } else {
+                console.log(data);
             }
             break;
-        case 'object_part':
+        /*case 'object_part':
             var object = objects[data.id];
             if (object.object === 'player') {
                 logArea.textContent += data.name + " disconnected\n";

@@ -2,15 +2,13 @@ function Field() {
 
     Surp.initAnimations();
 
-    this.test = new Surp();
+    this.grass = new Grass();
 }
 
 
 Field.prototype.update = function() {
 
     Surp.updateAnimations();
-
-    this.test.update();
 };
 
 
@@ -212,12 +210,67 @@ Field.prototype.draw = function() {
 
     c.setLineDash([]);
 
+    this.drawColorCircleSlices();
 
-    this.test.drawShadow();
+    this.grass.draw();
 
-    this.test.draw();
-
+    surpManager.draw();
 
     camera.restore();
+
+};
+
+
+Field.prototype.drawColorCircleSlices = function() {
+
+    let colors = [
+        "#ff0000",
+        "#ffba00",
+        "#ffff00",
+        "#80ff00",
+        "#00ff37",
+        "#00ff94",
+        "#00ffff",
+        "#0084ff",
+        "#1800ff",
+        "#8400ff",
+        "#ff00ff",
+        "#ff00be"
+    ];
+
+    let radius = 1.2;
+    let margin = 0.3;
+    let sideAngle = TWO_PI / 24;
+    
+    let outerRadius = 49.675 - (2 * margin);
+    let innerRadius = 35.375 + (2 * margin);
+    let outerMidRadius = outerRadius - radius;
+    let innerMidRadius = innerRadius + radius;
+
+    let outerAngle = sideAngle - ((radius + margin) / outerMidRadius);
+    let innerAngle = sideAngle - ((radius + margin) / innerMidRadius);
+
+    let outerSin = Math.sin(outerAngle);
+    let outerCos = Math.cos(outerAngle);
+    let innerSin = Math.sin(innerAngle);
+    let innerCos = Math.cos(innerAngle);
+
+    for(let i = 0; i < 12; i++) {
+        c.save();
+        c.rotate(i * 2 * sideAngle);
+
+        c.fillStyle = colors[i];
+        c.beginPath();
+        c.arc(outerCos * outerMidRadius, -outerSin * outerMidRadius, radius, -HALF_PI - sideAngle, -sideAngle);
+        c.arc(0, 0, outerRadius, -outerAngle, outerAngle);
+        c.arc(outerCos * outerMidRadius, outerSin * outerMidRadius, radius, sideAngle, HALF_PI + sideAngle);
+        c.arc(innerCos * innerMidRadius, innerSin * innerMidRadius, radius, HALF_PI + sideAngle, PI + sideAngle);
+        c.arc(0, 0, innerRadius, innerAngle, -innerAngle, true);
+        c.arc(innerCos * innerMidRadius, -innerSin * innerMidRadius, radius, PI - sideAngle, -HALF_PI - sideAngle);
+        c.closePath();
+        c.fill();
+
+        c.restore();
+    }
 
 };

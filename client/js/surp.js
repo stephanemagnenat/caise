@@ -1,14 +1,26 @@
-function Surp() {
+function Surp(data) {
 
-    this.pos = new Vec2(3, 4);
-    this.pointsSin = [];
-    this.pointsMag = [];
+    this.id = data.id;
+    this.name = data.name;
+    this.score = data.score;
 
-    this.spikiness = 0.0;
-    this.color = 0.0;
+    this.pos = new Vec2(data.pos[0], data.pos[1]);
+    this.drawPos = this.pos.copy();
+    this.speed = new Vec2(data.speed[0], data.speed[1]);
+    this.lastSpeed = this.speed.copy();
+
+    this.weapon = data.weapon;
+    this.power = data.power;
+    this.hasBall = data.hasBall;
+
+    this.spikiness = data.spikiness;
+    this.color = data.color;
+
     this.colorObj = Color.fromHSL(this.color, 1.0, 0.5);
     this.halfColorObj = Color.fromHSL(this.color, 0.5, 0.8);
 
+    this.pointsSin = [];
+    this.pointsMag = [];
     for(let i = 0; i < Surp.NUM_OF_POINTS; i++) {
         this.pointsSin[i] = Utils.rand(0, Surp.NUM_OF_SINS - 1);
         if(i % 2 === 0) {
@@ -22,6 +34,24 @@ function Surp() {
     this.jumpAnimation = 0.0;
     this.jumpHeight = 0.0;
     this.jumpSquish = 0.0;
+
+    this.walkingAmplitude = 0.0;
+    this.walkingAmplitudeTarget = 0.0;
+
+    this.lagFixes = [];
+
+    this.label = new Text({
+        x : 0,
+        y : 0,
+        text : this.name,
+        size : 36,
+        font : "opensans",
+        align : "center",
+        color : "#fff",
+        borderWidth : 5,
+        borderColor : "#000",
+        letterSpacing : 1
+    });
 
 }
 
@@ -64,27 +94,76 @@ Surp.updateAnimations = function() {
 };
 
 
+Surp.prototype.updateData = function(data) {
+
+    this.score = data.score;
+
+    let newPos = new Vec2(data.pos[0], data.pos[1]);
+    this.lagFixes.push({ delta : this.pos.subtract(newPos), effect : 1.0 });
+    this.pos = newPos;
+    this.speed = new Vec2(data.speed[0], data.speed[1]);
+    if(this.speed.norm() !== 0) {
+        this.lastSpeed = this.speed.copy();
+    }
+
+    this.weapon = data.weapon;
+    this.power = data.power;
+    this.hasBall = data.hasBall;
+
+    this.spikiness = data.spikiness;
+    this.color = data.color;
+};
+
+
 Surp.prototype.update = function() {
-    this.spikiness = Utils.limit(Mouse.pos.y / Game.height, 0.0, 1.0);
 
-    this.color = Utils.limit(Mouse.pos.x / Game.width, 0.0, 1.0);
-    this.colorObj = Color.fromHSL(this.color, 1.0, 0.5);
-    this.halfColorObj = Color.fromHSL(this.color, 0.5, 0.7);
+    this.pos = this.pos.add(this.speed.multiply(Timer.delta));
 
-    if(Mouse.left.down) {
-        this.jumpAnimation += Timer.delta * 1.6;
+    this.drawPos = this.pos.copy();
+    let newLagFixes = [];
+    let lagFix;
+    for(let i = 0; i < this.lagFixes.length; i++) {
+        lagFix = this.lagFixes[i];
+        lagFix.effect -= Timer.delta * 3.0;
+        if(lagFix.effect > 0) {
+            this.drawPos = this.drawPos.add(lagFix.delta.multiply(lagFix.effect));
+            newLagFixes.push(lagFix);
+        }
+    }
+    this.lagFixes = newLagFixes;
+
+    this.walkingAmplitudeTarget = Utils.limit(this.speed.norm(), 0.0, 1.0);
+    if(this.walkingAmplitude < this.walkingAmplitudeTarget) {
+        this.walkingAmplitude += Timer.delta * 4.0;
+        if(this.walkingAmplitude >= this.walkingAmplitudeTarget) {
+            this.walkingAmplitude = this.walkingAmplitudeTarget;
+        }
+    } else if(this.walkingAmplitude > this.walkingAmplitudeTarget) {
+        this.walkingAmplitude -= Timer.delta * 4.0;
+        if(this.walkingAmplitude <= this.walkingAmplitudeTarget) {
+            this.walkingAmplitude = this.walkingAmplitudeTarget;
+        }
+    }
+
+    if(this.walkingAmplitude > 0) {
+        this.jumpAnimation += Timer.delta * 1.6 * this.walkingAmplitude;
         if(this.jumpAnimation > 1.0) {
             this.jumpAnimation -= 1.0;
         }
+    } else {
+        this.jumpAnimation = 0.0;
     }
     this.jumpSquish = Math.cos((this.jumpAnimation + 0.3) * TWO_PI);
     this.jumpHeight = 0.5 - (0.5 * Math.cos(this.jumpAnimation * TWO_PI));
+
+    this.jumpSquish *= Interpolate.cube(this.walkingAmplitude);
+    this.jumpHeight *= Interpolate.cube(this.walkingAmplitude);
 };
 
 
 Surp.prototype.drawShadow = function() {
     c.save();
-    c.translate(this.pos.x, this.pos.y);
+    c.translate(this.drawPos.x, this.drawPos.y);
 
     c.scale(1.0 - (0.25 * this.jumpHeight), 0.8 - (0.2 * this.jumpHeight));
     let gradient = c.createRadialGradient(0, 0, 0, 0, 0, 1.2);
@@ -101,7 +180,7 @@ Surp.prototype.drawShadow = function() {
 Surp.prototype.draw = function() {
 
     c.save();
-    c.translate(this.pos.x, this.pos.y);
+    c.translate(this.drawPos.x, this.drawPos.y);
     c.translate(0, 0.6 - (1.2 * this.jumpHeight));
     c.scale(1.0 + (this.jumpSquish * 0.1), 1.0 - (this.jumpSquish * 0.1));
     c.translate(0, -1.5);
@@ -146,7 +225,7 @@ Surp.prototype.draw = function() {
 
     // cheeks
 
-    let lookDir = 0.5 * (-1.0 + (2.0 * Utils.limit(Mouse.pos.x / Game.width, 0.0, 1.0)));
+    let lookDir = 0.5 * Utils.limit(0.1 * this.speed.x, -1.0, 1.0);
 
     c.fillStyle = this.colorObj.toHex();
     c.save();
@@ -178,4 +257,14 @@ Surp.prototype.draw = function() {
 
     c.restore();
 
+};
+
+Surp.prototype.drawName = function() {
+    c.save();
+    c.translate(this.drawPos.x, this.drawPos.y - 3.2);
+    c.scale(0.0208333, 0.0208333);
+
+    this.label.draw();
+
+    c.restore();
 };

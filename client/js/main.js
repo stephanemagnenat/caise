@@ -4,6 +4,7 @@ var c;
 var field;
 var camera;
 var player;
+var surpManager;
 var websocketManager;
 
 
