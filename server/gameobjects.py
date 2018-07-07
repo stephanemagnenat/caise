@@ -36,6 +36,16 @@ def _clip_field(pos, mx, my):
 	else:
 		assert False
 
+def _is_on_hole(pos, mx, my):
+	test_pos = pos * [mx, my]
+	if test_pos[0] <= WORLD_CENTER_HALF_WIDTH:
+		return False
+	if test_pos[1] <= WORLD_CENTER_HALF_WIDTH:
+		return False
+	test_pos_length = np.linalg.norm(test_pos)
+	if test_pos_length >= WORLD_CIRCLE_INNER_RADIUS:
+		return False
+	return True
 
 def _numpy_rounded(v):
 	return list(map(lambda x: round(x,3), v.tolist()))
@@ -67,6 +77,13 @@ class GameObject(ABC):
 			self.speed[:] = [0,0]
 			self.speed_hl = 0.
 			return True
+		return False
+
+	def is_on_hole(self):
+		for my in [-1,1]:
+			for mx in [-1,1]:
+				if _is_on_hole(self.pos, mx, my):
+					return True
 		return False
 
 	def does_collide(self, other, deinterlace_vector = None):
@@ -141,6 +158,15 @@ class Player(GameObject):
 			self.speed = self.speed_cmd
 		# do the step
 		need_update = super(Player, self).step(dt, cur_time)
+		# is on hole
+		if self.is_on_hole():
+			print("in hole!!")
+			# TODO: find good place
+			self.pos[:] = [0,0]
+			self.speed[:] = [0,0]
+			self.speed_hl = 0.
+			self.last_time_stunned = cur_time
+			need_update = True
 		# should we send update?
 		return need_update or not np.array_equal(old_speed, self.speed)
 

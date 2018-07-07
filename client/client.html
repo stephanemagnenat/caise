@@ -42,6 +42,34 @@
 				ctx.fill();
 				ctx.fillRect(80, 60, 400, 280);
 				ctx.fillRect(480, 0, 80, 400);
+				ctx.fillStyle = 'rgb(255,255,255)';
+				var alpha = Math.asin(15. / 35);
+				for (var i = 0; i < 4; ++i) {
+					ctx.beginPath();
+					ctx.arc(280, 200, 35*4, alpha + i * Math.PI/2, (i+1) * Math.PI/2 - alpha)
+					ctx.fill();
+				}
+				var l = (35*4) * Math.cos(alpha);
+				ctx.beginPath();
+				ctx.moveTo(280+60,200+60);
+				ctx.lineTo(280+l, 200+60);
+				ctx.lineTo(280+60, 200+l);
+				ctx.fill();
+				ctx.beginPath();
+				ctx.moveTo(280+60,200-60);
+				ctx.lineTo(280+l, 200-60);
+				ctx.lineTo(280+60, 200-l);
+				ctx.fill();
+				ctx.beginPath();
+				ctx.moveTo(280-60,200+60);
+				ctx.lineTo(280-l, 200+60);
+				ctx.lineTo(280-60, 200+l);
+				ctx.fill();
+				ctx.beginPath();
+				ctx.moveTo(280-60,200-60);
+				ctx.lineTo(280-l, 200-60);
+				ctx.lineTo(280-60, 200-l);
+				ctx.fill();
 				ctx.fillStyle = 'rgb(0,0,0)';
 				for (const [id, data] of Object.entries(objects)) {
 					var x = data.pos[0]*4 + 280
