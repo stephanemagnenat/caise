@@ -69,6 +69,8 @@ async def register(websocket):
 		await websocket.send(message_object_new(state.ball))
 	for other_websocket, other_player in state.players.items():
 		await websocket.send(message_object_new(other_player))
+	for _, box in state.boxes.items():
+		await websocket.send(message_object_new(box))
 	# add to the list of players
 	state.players[websocket] = player
 	# tell all players about this new one
@@ -99,25 +101,6 @@ async def process_client(websocket, path):
 				player.move(data['speed'], 0.1)
 			elif data['action'] == 'weapon_trigger':
 				cur_time = time.time()
-				#if cur_time - player.last_fire_time < TIME_BETWEEN_FIRE:
-					## we are not allowed to fire
-					#continue
-				## see if any other player has been hit
-				#did_hit = False
-				#for other_websocket, other_player in players.items():
-					#if other_player == player:
-						#continue
-					## if we hit the other
-					#if np.linalg.norm(other_player.pos - player.pos) < DIST_TO_HIT:
-						#did_hit = True
-						## increase our score
-						#player.score += 1
-						## disable fire for other
-						#other_player.last_fire_time = cur_time
-				## if we did hit, update the client
-				#if did_hit:
-					#await notify_players(player, message_object_status)
-				#player.last_fire_time = cur_time
 			elif data['action'] == 'power_trigger':
 				logging.info("Got power trigger, unimplemented yet")
 			else:
@@ -129,10 +112,24 @@ async def process_client(websocket, path):
 
 async def run_state():
 	last_time = time.time()
+	last_box_time = last_time
 	while True:
 		# main game logic loop
 		cur_time = time.time()
 		delta_time = cur_time - last_time
+
+		# boxes
+		if cur_time - last_box_time > BOX_RESPAWN_INTERVAL and len(state.boxes) < BOX_MAX_COUNT:
+			last_box_time = cur_time
+			box = Box(state.next_gameobject_id)
+			state.next_gameobject_id += 1
+			while True:
+				box.pos = np.random.rand(2) * 2 * [WORLD_HALF_SIZE_X, WORLD_HALF_SIZE_Y] - [WORLD_HALF_SIZE_X, WORLD_HALF_SIZE_Y]
+				clip_to_field(box.pos)
+				if not is_on_hole(box.pos):
+					break
+			await notify_players(box, message_object_new)
+			state.boxes[box.id] = box
 
 		# ball collision
 		if state.ball is not None and state.ball.step(delta_time, cur_time):
@@ -146,12 +143,24 @@ async def run_state():
 				await notify_players(player, message_object_status)
 
 			# ball fetching
-			fetch_ball = False
 			if state.ball and player.does_collide(state.ball):
 				player.has_ball = True
 				await notify_players(player, message_object_status)
 				await notify_players(state.ball, message_object_part)
 				state.ball = None
+
+			# box fetching
+			for box_id in list(state.boxes.keys()):
+				box = state.boxes[box_id]
+				if player.does_collide(box):
+					await notify_players(box, message_object_part)
+					del(state.boxes[box_id])
+					roll = random.randint(0,13)
+					if roll == 12:
+						player.weapon = 7
+					else:
+						player.weapon = roll / 2
+					await notify_players(player, message_object_status)
 
 			# collision with other player
 			for _, other in state.players.items():

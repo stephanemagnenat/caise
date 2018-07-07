@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import random
 from abc import ABC, abstractmethod
 
 from constants import *
@@ -50,6 +51,17 @@ def _is_on_hole(pos, mx, my):
 def _numpy_rounded(v):
 	return list(map(lambda x: round(x,3), v.tolist()))
 
+def clip_to_field(pos):
+	for my in [-1,1]:
+		for mx in [-1,1]:
+			_clip_field(pos, mx, my)
+
+def is_on_hole(pos):
+	for my in [-1,1]:
+		for mx in [-1,1]:
+			if _is_on_hole(pos, mx, my):
+				return True
+	return False
 
 class GameObject(ABC):
 	def __init__(self, id, r):
@@ -68,22 +80,12 @@ class GameObject(ABC):
 			self.speed *= np.power(2, -dt / self.speed_hl)
 		# clip external rectangle
 		new_pos = np.clip(self.pos, [-WORLD_HALF_SIZE_X, -WORLD_HALF_SIZE_Y], [WORLD_HALF_SIZE_X, WORLD_HALF_SIZE_Y])
-		# clip internal
-		for my in [-1,1]:
-			for mx in [-1,1]:
-				_clip_field(new_pos, mx, my)
+		clip_to_field(new_pos)
 		if not np.array_equal(new_pos, self.pos):
 			self.pos = new_pos
 			self.speed[:] = [0,0]
 			self.speed_hl = 0.
 			return True
-		return False
-
-	def is_on_hole(self):
-		for my in [-1,1]:
-			for mx in [-1,1]:
-				if _is_on_hole(self.pos, mx, my):
-					return True
 		return False
 
 	def does_collide(self, other, deinterlace_vector = None):
@@ -147,6 +149,10 @@ class Player(GameObject):
 		self.score = 0
 		self.last_time_stunned = 0.
 		self.speed_cmd = np.zeros(2)
+		self.color = random.uniform(0,1)
+		self.spikiness = random.uniform(0,1)
+		self.weapon = -1
+		self.power = -1
 
 	def move(self, speed, factor):
 		self.speed_cmd = np.array(speed) * factor
@@ -159,7 +165,7 @@ class Player(GameObject):
 		# do the step
 		need_update = super(Player, self).step(dt, cur_time)
 		# is on hole
-		if self.is_on_hole():
+		if is_on_hole(self.pos):
 			print("in hole!!")
 			# TODO: find good place
 			self.pos[:] = [0,0]
@@ -182,4 +188,8 @@ class Player(GameObject):
 			json_state['name'] = self.name
 		json_state['has_ball'] = self.has_ball
 		json_state['score'] = self.score
+		json_state['color'] = round(self.color, 2)
+		json_state['spikiness'] = round(self.spikiness, 2)
+		json_state['weapon'] = self.weapon
+		json_state['power'] = self.power
 		return json_state
