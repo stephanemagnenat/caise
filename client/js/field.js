@@ -3,12 +3,105 @@ function Field() {
     Surp.initAnimations();
 
     this.grass = new Grass();
+
+    this.ballId = -1;
+    this.ball = null;
+
+    this.ballAni = 0;
+    this.ballAniHeight = 0;
 }
+
+
+Field.prototype.addBall = function(data) {
+    this.ballId = data.id;
+    this.ball = {
+        id : data.id,
+        drawPos : new Vec2(data.pos[0], data.pos[1]),
+        speed : new Vec2(data.speed[0], data.speed[1]),
+        speedHl : data.speed_hl,
+        drawShadow : function() {
+            field.drawBallShadow();
+        },
+        draw : function() {
+            field.drawBall();
+        },
+        drawName : function() {}
+    };
+};
+
+
+Field.prototype.isBall = function(id) {
+    return id === this.ballId;
+};
+
+
+Field.prototype.updateBall = function(data) {
+    if(this.ball !== null) {
+        this.ball.drawPos = new Vec2(data.pos[0], data.pos[1]);
+        this.ball.speed = new Vec2(data.speed[0], data.speed[1]);
+        this.ball.speedHl = data.speed_hl;
+    }
+};
+
+
+Field.prototype.deleteBall = function() {
+    this.ballId = -1;
+    this.ball = null;
+};
+
+
+Field.prototype.addBallToDrawOrder = function(drawOrder, view) {
+    if(this.ball !== null) {
+        let x = this.ball.drawPos.x;
+        let y = this.ball.drawPos.y;
+        if(x > view.startX && x < view.endX && y > view.startY && y < view.endY) {
+            drawOrder.push(this.ball);
+        }
+    }
+};
+
+
+Field.prototype.drawBallShadow = function() {
+    c.save();
+    c.translate(this.ball.drawPos.x, this.ball.drawPos.y);
+
+    c.scale(1.0 - (0.15 * this.ballAniHeight), 0.8 - (0.12 * this.ballAniHeight));
+    let gradient = c.createRadialGradient(0, 0, 0, 0, 0, 1.0);
+    gradient.addColorStop(0.75 - (0.2 * this.ballAniHeight), "rgba(0, 0, 0, 0.2)");
+    gradient.addColorStop(1.0, "rgba(0, 0, 0, 0.0)");
+    c.fillStyle = gradient;
+    Utils.drawCircle(c, 0, 0, 1.0);
+    c.fill();
+
+    c.restore();
+};
+
+
+Field.prototype.drawBall = function() {
+
+    c.save();
+    c.translate(this.ball.drawPos.x, this.ball.drawPos.y);
+
+    Img.drawScaled("star", -1.5, -2.4 - (0.6 * this.ballAniHeight), 0.0208333);
+
+    c.restore();
+
+};
 
 
 Field.prototype.update = function() {
 
     Surp.updateAnimations();
+
+    if(this.ball !== null) {
+
+        this.ballAni += Timer.delta;
+        if(this.ballAni > 1.0) {
+            this.ballAni -= 1.0;
+        }
+        this.ballAniHeight = 0.5 - (0.5 * Math.cos(TWO_PI * this.ballAni));
+        // TODO
+    }
 };
 
 

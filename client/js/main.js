@@ -5,6 +5,7 @@ var field;
 var camera;
 var player;
 var surpManager;
+var boxManager;
 var websocketManager;
 var panel;
 

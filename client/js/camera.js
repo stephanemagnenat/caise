@@ -68,3 +68,16 @@ Camera.prototype.getRenderLimitsInRetinaGraphicCoords = function() {
     };
 };
 
+
+Camera.prototype.getRenderLimitsInGameCoords = function() {
+    let x = this.pos.x;
+    let y = this.pos.y;
+    let centerX = 0.5 * (Game.width - Panel.WIDTH);
+    return {
+        startX : x - (centerX / this.zoom) - 3,
+        endX : x + ((Game.width - centerX) / this.zoom) + 3,
+        startY : y - ((0.5 * Game.height) / this.zoom) - 3,
+        endY : y + ((0.5 * Game.height) / this.zoom) + 5
+    };
+};
+

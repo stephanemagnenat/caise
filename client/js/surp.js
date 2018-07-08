@@ -11,7 +11,7 @@ function Surp(data) {
 
     this.weapon = data.weapon;
     this.power = data.power;
-    this.hasBall = data.hasBall;
+    this.hasBall = data.has_ball;
 
     this.spikiness = data.spikiness;
     this.color = data.color;
@@ -43,6 +43,9 @@ function Surp(data) {
     this.lagFixes = [];
 
     this.faceExpression = this.hasBall ? 1 : 0;
+
+    this.disconnected = false;
+    this.deathAni = 0.0;
 
     this.label = new Text({
         x : 0,
@@ -120,7 +123,7 @@ Surp.prototype.updateData = function(data) {
 
     this.weapon = data.weapon;
     this.power = data.power;
-    this.hasBall = data.hasBall;
+    this.hasBall = data.has_ball;
 
     this.spikiness = data.spikiness;
     this.color = data.color;
@@ -138,6 +141,11 @@ Surp.prototype.isInSpawnArea = function(pos) {
 
 
 Surp.prototype.update = function() {
+
+    if(this.disconnected) {
+        this.deathAni += Timer.delta;
+        return;
+    }
 
     if(this.fallInHoleCooldown > 0.0) {
         this.fallInHoleCooldown -= Timer.delta;
@@ -204,6 +212,9 @@ Surp.prototype.drawShadow = function() {
     if(this.fallInHoleCooldown > 0.0) {
         c.globalAlpha = this.fallInHoleCooldown;
     }
+    if(this.deathAni > 0.0) {
+        c.globalAlpha = Utils.limit(1.0 - this.deathAni, 0.0, 1.0);
+    }
 
     c.save();
     c.translate(this.drawPos.x, this.drawPos.y);
@@ -218,7 +229,7 @@ Surp.prototype.drawShadow = function() {
 
     c.restore();
 
-    if(this.fallInHoleCooldown > 0.0) {
+    if(this.fallInHoleCooldown > 0.0 || this.deathAni > 0.0) {
         c.globalAlpha = 1;
     }
 };
@@ -228,6 +239,9 @@ Surp.prototype.draw = function() {
 
     if(this.fallInHoleCooldown > 0.0) {
         c.globalAlpha = this.fallInHoleCooldown;
+    }
+    if(this.deathAni > 0.0) {
+        c.globalAlpha = Utils.limit(1.0 - this.deathAni, 0.0, 1.0);
     }
 
     c.save();
@@ -244,12 +258,9 @@ Surp.prototype.draw = function() {
         c.rotate(multiplier * (1.0 - this.fallInHoleCooldown));
     }
 
-    /*c.strokeStyle = "#000";
-    c.lineWidth = 0.1333;
-    c.fillStyle = "#fcc";
-    Utils.drawCircle(c, 0, 0, 0.9);
-    c.fill();
-    c.stroke();*/
+    if(this.hasBall) {
+        Img.drawScaled("star", -1.5, -1.5, 0.0208333);
+    }
 
     // body
 
@@ -316,7 +327,7 @@ Surp.prototype.draw = function() {
 
     c.restore();
 
-    if(this.fallInHoleCooldown > 0.0) {
+    if(this.fallInHoleCooldown > 0.0 || this.deathAni > 0.0) {
         c.globalAlpha = 1;
     }
 
@@ -327,6 +338,9 @@ Surp.prototype.drawName = function() {
     if(this.fallInHoleCooldown > 0.0) {
         c.globalAlpha = this.fallInHoleCooldown;
     }
+    if(this.deathAni > 0.0) {
+        c.globalAlpha = Utils.limit(1.0 - this.deathAni, 0.0, 1.0);
+    }
 
     c.save();
     c.translate(this.drawPos.x, this.drawPos.y - 3.2);
@@ -336,7 +350,7 @@ Surp.prototype.drawName = function() {
 
     c.restore();
 
-    if(this.fallInHoleCooldown > 0.0) {
+    if(this.fallInHoleCooldown > 0.0 || this.deathAni > 0.0) {
         c.globalAlpha = 1;
     }
 };

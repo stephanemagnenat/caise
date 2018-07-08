@@ -38,6 +38,13 @@ WebsocketManager.prototype.processMessage = function(event) {
         case "object_new" :
             if(data.object === "player") {
                 surpManager.addSurp(data);
+
+            } else if(data.object === "box") {
+                boxManager.addBox(data);
+
+            } else if(data.object === "ball") {
+                field.addBall(data);
+
             } else {
                 console.log(data);
             }
@@ -47,20 +54,36 @@ WebsocketManager.prototype.processMessage = function(event) {
             }*/
             break;
 
-        case "object_state":
+        case "object_state" :
             if(surpManager.isSurp(data.id)) {
                 surpManager.updateSurp(data.id, data);
+
+            } else if(boxManager.isBox(data.id)) {
+                boxManager.updateBox(data.id, data);
+
+            } else if(field.isBall(data.id)) {
+                field.updateBall(data);
+
             } else {
                 console.log(data);
             }
             break;
-        /*case 'object_part':
-            var object = objects[data.id];
-            if (object.object === 'player') {
-                logArea.textContent += data.name + " disconnected\n";
+
+        case "object_part" :
+            if(surpManager.isSurp(data.id)) {
+                surpManager.deleteSurp(data.id);
+
+            } else if(boxManager.isBox(data.id)) {
+                boxManager.deleteBox(data.id);
+
+            } else if(field.isBall(data.id)) {
+                field.deleteBall();
+
+            } else {
+                console.log(data);
             }
-            delete objects[data.id];
-            break;*/
+            break;
+
         default:
             console.error("unsupported event", data);
     }

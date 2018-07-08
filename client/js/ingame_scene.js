@@ -7,6 +7,7 @@ IngameScene.show = function() {
     camera = new Camera();
     player = new Player();
     surpManager = new SurpManager();
+    boxManager = new BoxManager();
 
     let tempHost = window.prompt("Please enter Host", "192.168.2.20");
     let tempName = window.prompt("Please enter your name, Sir Prise.", "");
