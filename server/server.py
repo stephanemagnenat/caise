@@ -8,6 +8,7 @@ import json
 import logging
 import websockets
 import time
+import math
 import numpy as np
 
 from numpy.linalg import norm
@@ -120,10 +121,37 @@ async def process_client(websocket, path):
 async def run_state():
 	last_time = time.time()
 	last_box_time = last_time
+	last_scoring_time = last_time
 	while True:
 		# main game logic loop
 		cur_time = time.time()
 		delta_time = cur_time - last_time
+
+		# game mechanics
+		if cur_time - last_scoring_time > SCORING_PERIOD:
+			last_scoring_time = cur_time
+			## find ball
+			ball_pos = None
+			if state.ball is not None:
+				ball_pos = state.ball.pos
+			if ball_pos is None:
+				for _, player in state.players.items():
+					if player.has_ball:
+						ball_pos = player.pos
+						break
+			assert ball_pos is not None
+			ball_dist = norm(ball_pos)
+			if ball_dist > WORLD_CIRCLE_INNER_RADIUS and ball_dist < WORLD_CIRCLE_RADIUS:
+				# ball is in rainbow circle, change points
+				ball_color = math.atan2(ball_pos[1], ball_pos[0])
+				for _, player in state.players.items():
+					alpha = player.color * math.pi * 2
+					color_v = np.array([math.cos(alpha), math.sin(alpha)])
+					similarity = np.inner(ball_pos, color_v) / ball_dist
+					delta_points = int(round(similarity * IN_RAINBOW_DELTA_POINTS))
+					player.score += delta_points
+					if delta_points != 0:
+						await notify_players(player, message_object_status)
 
 		# boxes
 		if cur_time - last_box_time > BOX_RESPAWN_INTERVAL and len(state.boxes) < BOX_MAX_COUNT:
