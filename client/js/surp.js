@@ -38,7 +38,11 @@ function Surp(data) {
     this.walkingAmplitude = 0.0;
     this.walkingAmplitudeTarget = 0.0;
 
+    this.fallInHoleCooldown = 0.0;
+
     this.lagFixes = [];
+
+    this.faceExpression = this.hasBall ? 1 : 0;
 
     this.label = new Text({
         x : 0,
@@ -99,9 +103,17 @@ Surp.prototype.updateData = function(data) {
     this.score = data.score;
 
     let newPos = new Vec2(data.pos[0], data.pos[1]);
-    this.lagFixes.push({ delta : this.pos.subtract(newPos), effect : 1.0 });
+    let newSpeed = new Vec2(data.speed[0], data.speed[1]);
+
+    if(this.isInRangeOfHole() && this.isInSpawnArea(newPos) && newSpeed.norm() < 0.001) {
+        this.fallInHoleCooldown = 1.0;
+        this.faceExpression = 2;
+        this.lagFixes = [];
+    } else {
+        this.lagFixes.push({ delta : this.pos.subtract(newPos), effect : 1.0 });
+    }
     this.pos = newPos;
-    this.speed = new Vec2(data.speed[0], data.speed[1]);
+    this.speed = newSpeed;
     if(this.speed.norm() !== 0) {
         this.lastSpeed = this.speed.copy();
     }
@@ -115,22 +127,48 @@ Surp.prototype.updateData = function(data) {
 };
 
 
+Surp.prototype.isInRangeOfHole = function() {
+    return this.pos.norm() <= 36 && Math.abs(this.pos.x) > 14 && Math.abs(this.pos.y) > 14;
+};
+
+
+Surp.prototype.isInSpawnArea = function(pos) {
+    return pos.norm() <= 15;
+};
+
+
 Surp.prototype.update = function() {
 
-    this.pos = this.pos.add(this.speed.multiply(Timer.delta));
+    if(this.fallInHoleCooldown > 0.0) {
+        this.fallInHoleCooldown -= Timer.delta;
+        if(this.fallInHoleCooldown <= 0.0) {
+            this.fallInHoleCooldown = 0.0;
+            this.faceExpression = this.hasBall ? 1 : 0;
+        } else {
 
-    this.drawPos = this.pos.copy();
-    let newLagFixes = [];
-    let lagFix;
-    for(let i = 0; i < this.lagFixes.length; i++) {
-        lagFix = this.lagFixes[i];
-        lagFix.effect -= Timer.delta * 3.0;
-        if(lagFix.effect > 0) {
-            this.drawPos = this.drawPos.add(lagFix.delta.multiply(lagFix.effect));
-            newLagFixes.push(lagFix);
+            this.drawPos = this.drawPos.add(this.lastSpeed.multiply(Timer.delta));
+            this.drawPos.y += 20 * (1.0 - this.fallInHoleCooldown) * Timer.delta;
         }
     }
-    this.lagFixes = newLagFixes;
+
+    if(this.fallInHoleCooldown === 0.0) {
+
+        this.pos = this.pos.add(this.speed.multiply(Timer.delta));
+
+        this.drawPos = this.pos.copy();
+        let newLagFixes = [];
+        let lagFix;
+        for(let i = 0; i < this.lagFixes.length; i++) {
+            lagFix = this.lagFixes[i];
+            lagFix.effect -= Timer.delta * 3.0;
+            if(lagFix.effect > 0) {
+                this.drawPos = this.drawPos.add(lagFix.delta.multiply(lagFix.effect));
+                newLagFixes.push(lagFix);
+            }
+        }
+        this.lagFixes = newLagFixes;
+    }
+
 
     this.walkingAmplitudeTarget = Utils.limit(this.speed.norm(), 0.0, 1.0);
     if(this.walkingAmplitude < this.walkingAmplitudeTarget) {
@@ -162,6 +200,11 @@ Surp.prototype.update = function() {
 
 
 Surp.prototype.drawShadow = function() {
+
+    if(this.fallInHoleCooldown > 0.0) {
+        c.globalAlpha = this.fallInHoleCooldown;
+    }
+
     c.save();
     c.translate(this.drawPos.x, this.drawPos.y);
 
@@ -174,16 +217,32 @@ Surp.prototype.drawShadow = function() {
     c.fill();
 
     c.restore();
+
+    if(this.fallInHoleCooldown > 0.0) {
+        c.globalAlpha = 1;
+    }
 };
 
 
 Surp.prototype.draw = function() {
+
+    if(this.fallInHoleCooldown > 0.0) {
+        c.globalAlpha = this.fallInHoleCooldown;
+    }
 
     c.save();
     c.translate(this.drawPos.x, this.drawPos.y);
     c.translate(0, 0.6 - (1.2 * this.jumpHeight));
     c.scale(1.0 + (this.jumpSquish * 0.1), 1.0 - (this.jumpSquish * 0.1));
     c.translate(0, -1.5);
+
+    if(this.fallInHoleCooldown > 0.0) {
+        let multiplier = 1.8;
+        if(this.lastSpeed.x < 0) {
+            multiplier = -1.8;
+        }
+        c.rotate(multiplier * (1.0 - this.fallInHoleCooldown));
+    }
 
     /*c.strokeStyle = "#000";
     c.lineWidth = 0.1333;
@@ -225,7 +284,7 @@ Surp.prototype.draw = function() {
 
     // cheeks
 
-    let lookDir = 0.5 * Utils.limit(0.1 * this.speed.x, -1.0, 1.0);
+    let lookDir = 0.5 * Utils.limit(0.1 * this.lastSpeed.x, -1.0, 1.0);
 
     c.fillStyle = this.colorObj.toHex();
     c.save();
@@ -257,9 +316,18 @@ Surp.prototype.draw = function() {
 
     c.restore();
 
+    if(this.fallInHoleCooldown > 0.0) {
+        c.globalAlpha = 1;
+    }
+
 };
 
 Surp.prototype.drawName = function() {
+
+    if(this.fallInHoleCooldown > 0.0) {
+        c.globalAlpha = this.fallInHoleCooldown;
+    }
+
     c.save();
     c.translate(this.drawPos.x, this.drawPos.y - 3.2);
     c.scale(0.0208333, 0.0208333);
@@ -267,4 +335,8 @@ Surp.prototype.drawName = function() {
     this.label.draw();
 
     c.restore();
+
+    if(this.fallInHoleCooldown > 0.0) {
+        c.globalAlpha = 1;
+    }
 };

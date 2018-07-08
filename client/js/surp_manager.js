@@ -2,6 +2,9 @@ function SurpManager() {
 
     this.surps = {};
 
+    this.holeDrawOrder = [];
+    this.drawOrder = [];
+
 }
 
 
@@ -21,31 +24,64 @@ SurpManager.prototype.updateSurp = function(id, data) {
 
 
 SurpManager.prototype.update = function() {
+    let surp;
+    let y;
+
+    this.holeDrawOrder = [];
+    this.drawOrder = [];
+
     for(let surpIndex in this.surps) {
-        this.surps[surpIndex].update();
+        surp = this.surps[surpIndex];
+        surp.update();
+        y = surp.drawPos.y;
+        if(surp.fallInHoleCooldown > 0.0 && ((y < 0 && y > -18) || y > 20)) {
+            this.holeDrawOrder.push(surp);
+        } else {
+            this.drawOrder.push(surp);
+        }
     }
+
+    this.holeDrawOrder.sort(this.comparator);
+    this.drawOrder.sort(this.comparator);
+};
+
+
+SurpManager.prototype.comparator = function(a, b) {
+    if(a.pos.y < b.pos.y) {
+        return -1;
+    }
+    if(a.pos.y > b.pos.y) {
+        return 1;
+    }
+    return 0;
+};
+
+
+SurpManager.prototype.drawInHole = function() {
+
+    for(let i in this.holeDrawOrder) {
+        this.holeDrawOrder[i].drawShadow();
+    }
+    for(let i in this.holeDrawOrder) {
+        this.holeDrawOrder[i].draw();
+    }
+    for(let i in this.holeDrawOrder) {
+        this.holeDrawOrder[i].drawName();
+    }
+
 };
 
 
 SurpManager.prototype.draw = function() {
 
-    // TODO draw order
-
-    let surp;
-    for(let surpIndex in this.surps) {
-        surp = this.surps[surpIndex];
-        surp.drawShadow();
+    for(let i in this.drawOrder) {
+        this.drawOrder[i].drawShadow();
     }
-
-    for(let surpIndex in this.surps) {
-        surp = this.surps[surpIndex];
-        surp.draw();
+    for(let i in this.drawOrder) {
+        this.drawOrder[i].draw();
     }
-
-
-    for(let surpIndex in this.surps) {
-        surp = this.surps[surpIndex];
-        surp.drawName();
+    for(let i in this.drawOrder) {
+        this.drawOrder[i].drawName();
     }
 
 };

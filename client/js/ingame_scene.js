@@ -13,6 +13,8 @@ IngameScene.show = function() {
     websocketManager = new WebsocketManager(tempHost, tempName);
     websocketManager.connect();
 
+    panel = new Panel();
+
 };
 
 
@@ -42,6 +44,7 @@ IngameScene.update = function() {
     surpManager.update();
     camera.update();
 
+    panel.update();
 
 };
 
@@ -50,7 +53,9 @@ IngameScene.draw = function() {
 
     field.draw();
 
-    Tooltip.draw();
+    player.draw();
 
-    PauseScreen.draw();
+    panel.draw();
+
+    Tooltip.draw();
 };

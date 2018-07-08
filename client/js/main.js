@@ -6,6 +6,7 @@ var camera;
 var player;
 var surpManager;
 var websocketManager;
+var panel;
 
 
 jQuery(document).ready(function() {

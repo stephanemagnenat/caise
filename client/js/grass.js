@@ -65,11 +65,16 @@ Grass.prototype.draw = function() {
     c.translate(-70, -50);
     c.scale(0.0208333, 0.0208333);
 
+    let view = camera.getRenderLimitsInRetinaGraphicCoords();
+
 
     let sprite;
     for(let i = 0; i < Grass.sprites.length; i++) {
         sprite = Grass.sprites[i];
-        Img.draw(sprite.name, sprite.x, sprite.y);
+        if(sprite.x < view.endX && sprite.x + sprite.w > view.startX
+            && sprite.y < view.endY && sprite.y + sprite.h > view.startY) {
+            Img.draw(sprite.name, sprite.x, sprite.y);
+        }
     }
 
 

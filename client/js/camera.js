@@ -2,6 +2,8 @@ function Camera() {
 
     this.pos = new Vec2(0, 0);
 
+    this.zoom = 24.0;
+
     this.history = [];
 }
 
@@ -24,6 +26,8 @@ Camera.prototype.update = function() {
     }
 
     this.pos = totalPos.multiply(1 / totalLengthHistory);
+
+
 };
 
 
@@ -39,13 +43,28 @@ Camera.prototype.getIdealPos = function() {
 
 Camera.prototype.apply = function() {
     c.save();
-    c.translate(Game.centerX, Game.centerY);
-    c.scale(24, 24);
+    c.translate(0.5 * (Game.width - Panel.WIDTH), Game.centerY);
+    c.scale(this.zoom, this.zoom);
     c.translate(-this.pos.x, -this.pos.y);
 };
 
 
 Camera.prototype.restore = function() {
     c.restore();
+};
+
+
+Camera.prototype.getRenderLimitsInRetinaGraphicCoords = function() {
+    let offsetX = 48 * 70;
+    let offsetY = 48 * 50;
+    let x = this.pos.x * this.zoom;
+    let y = this.pos.y * this.zoom;
+    let centerX = 0.5 * (Game.width - Panel.WIDTH);
+    return {
+        startX : offsetX + (2 * (x - centerX)),
+        endX : offsetX + (2 * (x + (Game.width - centerX))),
+        startY : offsetY + (2 * (y - (0.5 * Game.height))),
+        endY : offsetY + (2 * (y + (0.5 * Game.height)))
+    };
 };
 

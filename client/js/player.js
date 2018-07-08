@@ -16,3 +16,20 @@ Player.prototype.updateControls = function() {
 };
 
 
+Player.prototype.draw = function() {
+
+    if(websocketManager.id === null || !surpManager.surps.hasOwnProperty(websocketManager.id)) {
+        c.fillStyle = "#000";
+        c.fillRect(0, 0, Game.width, Game.height);
+        return;
+    }
+    let mySurp = surpManager.surps[websocketManager.id];
+    if(mySurp.fallInHoleCooldown > 0.0) {
+        c.globalAlpha = 1.0 - mySurp.fallInHoleCooldown;
+        c.fillStyle = "#000";
+        c.fillRect(0, 0, Game.width, Game.height);
+        c.globalAlpha = 1.0;
+    }
+};
+
+

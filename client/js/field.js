@@ -22,21 +22,49 @@ Field.prototype.draw = function() {
 
     camera.apply();
 
+
+    // holes
+
+    c.fillStyle = "#000";
+    c.beginPath();
+    c.moveTo(-15, -15);
+    c.arc(0, 0, 35, -PI + innerArcAngle, -HALF_PI - innerArcAngle);
+    c.closePath();
+    c.fill();
+
+    c.beginPath();
+    c.moveTo(15, -15);
+    c.arc(0, 0, 35, -HALF_PI + innerArcAngle, -innerArcAngle);
+    c.closePath();
+    c.fill();
+
+    c.beginPath();
+    c.moveTo(15, 15);
+    c.arc(0, 0, 35, innerArcAngle, HALF_PI - innerArcAngle);
+    c.closePath();
+    c.fill();
+
+    c.beginPath();
+    c.moveTo(-15, 15);
+    c.arc(0, 0, 35, HALF_PI + innerArcAngle, PI - innerArcAngle);
+    c.closePath();
+    c.fill();
+
+
+    surpManager.drawInHole();
+
+
+    // all lines
+
     c.lineWidth = 0.75;
     c.lineJoin = "round";
     c.lineCap = "round";
-    c.strokeStyle = "#fff";
-
-
-    // mid dot
-
-    c.fillStyle = "#fff";
-    Utils.drawCircle(c, 0, 0, 0.75);
-    c.fill();
+    c.strokeStyle = "#ceffba";
 
 
     // outer line
 
+    c.fillStyle = "#61CF8F";
     c.beginPath();
     c.moveTo(-70, -50);
     c.lineTo(-50, -50);
@@ -53,36 +81,32 @@ Field.prototype.draw = function() {
     c.lineTo(-50, 50);
     c.lineTo(-70, 50);
     c.closePath();
-    c.stroke();
 
-
-    // holes
-
-    c.beginPath();
     c.moveTo(-15, -15);
-    c.arc(0, 0, 35, -PI + innerArcAngle, -HALF_PI - innerArcAngle);
+    c.arc(0, 0, 35, -HALF_PI - innerArcAngle, -PI + innerArcAngle, true);
     c.closePath();
-    c.stroke();
 
-    c.beginPath();
     c.moveTo(15, -15);
-    c.arc(0, 0, 35, -HALF_PI + innerArcAngle, -innerArcAngle);
+    c.arc(0, 0, 35, -innerArcAngle, -HALF_PI + innerArcAngle, true);
     c.closePath();
-    c.stroke();
 
-    c.beginPath();
     c.moveTo(15, 15);
-    c.arc(0, 0, 35, innerArcAngle, HALF_PI - innerArcAngle);
+    c.arc(0, 0, 35, HALF_PI - innerArcAngle, innerArcAngle, true);
     c.closePath();
-    c.stroke();
 
-    c.beginPath();
     c.moveTo(-15, 15);
-    c.arc(0, 0, 35, HALF_PI + innerArcAngle, PI - innerArcAngle);
+    c.arc(0, 0, 35, PI - innerArcAngle, HALF_PI + innerArcAngle, true);
     c.closePath();
+
+    c.fill();
     c.stroke();
 
-    c.strokeStyle = "rgba(255, 255, 255, 0.8)";
+
+    // mid dot
+
+    c.fillStyle = "#ceffba";
+    Utils.drawCircle(c, 0, 0, 0.75);
+    c.fill();
 
 
     // circle lines
