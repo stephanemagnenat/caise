@@ -1,8 +1,5 @@
 #!/usr/bin/env python3.6
 
-# inspired from https://websockets.readthedocs.io/en/stable/intro.html
-# WS server example
-
 import asyncio
 import json
 import logging
@@ -68,7 +65,9 @@ async def notify_players(source_object, messager_builder_function):
 async def register(websocket):
 	# receive the name from this player
 	name = await websocket.recv()
-	# TODO: check for name duplications
+	for _, other_player in state.players.items():
+		if name == other_player.name:
+			name += str(random.randint(0,1000))
 	player = Player(name, state.next_gameobject_id)
 	player.pos[1] = 10
 	await websocket.send(json.dumps(message_player_welcome(player)))
@@ -104,9 +103,12 @@ async def unregister(websocket):
 ## client processing code
 
 async def process_client(websocket, path):
-	# register(websocket) sends user_event() to websocket
 
 	await state.lock.acquire()
+	if len(state.players) >= MAX_PLAYER_COUNT:
+		await websocket.send('{"type":"server_full","capacity":' + str(MAX_PLAYER_COUNT) + '}')
+		state.lock.release()
+		return
 	player = await register(websocket)
 	state.lock.release()
 
@@ -159,7 +161,7 @@ async def run_state():
 					break
 		assert ball_pos is not None
 
-		# spikiness scoring
+		# rainbow scoring
 		if cur_time - last_scoring_time > SCORING_PERIOD:
 			last_scoring_time = cur_time
 			ball_dist = norm(ball_pos)
@@ -185,6 +187,8 @@ async def run_state():
 				# goal, give points to players
 				for _, player in state.players.items():
 					delta_points = int(round(spikiness_score * (player.spikiness-0.5) * 2 * GOALS_DELTA_POINTS))
+					if player == player_with_ball:
+						delta_points *= GOAL_PLAYER_FACTOR
 					if delta_points != 0 or player == player_with_ball:
 						player.score += delta_points
 						await notify_players(player, message_object_status)
@@ -266,10 +270,7 @@ async def run_state():
 					await notify_players(box, message_object_part)
 					del(state.boxes[box_id])
 					roll = random.randint(0,13)
-					if roll == 12:
-						player.weapon = 7
-					else:
-						player.weapon = int(roll / 2)
+					player.weapon = int(roll / 2)
 					await notify_players(player, message_object_status)
 
 			# collision with other player

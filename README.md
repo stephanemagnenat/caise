@@ -12,5 +12,5 @@ The Jammers:
 ## Play the game
 
 1. Start the server `server/server.py`
-2. Open the client in a modern web browser `client/index.html`
+2. Open the client in a modern web browser `client/index.htm`
 3. Enjoy!
