@@ -12,8 +12,9 @@ function SurpManager() {
 
 SurpManager.prototype.addSurp = function(data) {
     this.surps[data.id] = new Surp(data);
-    if(this.initialConnectTime == 0.0 && data.id !== WebsocketManager.id) {
+    if(this.initialConnectTime === 0.0 && data.id !== WebsocketManager.id) {
         panel.addLog("Sir " + this.surps[data.id].name + " Prise joined the game.");
+        Sound.play("spawn");
     }
 };
 
@@ -30,7 +31,7 @@ SurpManager.prototype.updateSurp = function(id, data) {
 
 SurpManager.prototype.deleteSurp = function(id) {
     this.surps[id].disconnected = true;
-    if(this.initialConnectTime == 0.0 && data.id !== WebsocketManager.id) {
+    if(this.initialConnectTime === 0.0 && data.id !== WebsocketManager.id) {
         panel.addLog("Sir " + this.surps[id].name + " Prise disconnected.");
     }
 };

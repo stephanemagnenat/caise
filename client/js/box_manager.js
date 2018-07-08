@@ -31,6 +31,7 @@ BoxManager.prototype.isBox = function(id) {
 
 BoxManager.prototype.deleteBox = function(id) {
     // TODO particles
+    Sound.play("pickupbox");
     delete this.boxes[id];
 };
 

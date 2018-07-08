@@ -13,6 +13,9 @@ BulletManager.prototype.addBullet = function(data) {
         weapon : data.weapon,
         offset : Utils.randFloat(0, TWO_PI)
     };
+    if(surpManager.initialConnectTime < 1.0) {
+        Sound.play("fire");
+    }
 };
 
 
@@ -23,7 +26,7 @@ BulletManager.prototype.isBullet = function(id) {
 
 BulletManager.prototype.deleteBullet = function(id) {
     // TODO particle system
-    delete this.bullets[id]
+    delete this.bullets[id];
 };
 
 

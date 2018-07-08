@@ -2,7 +2,7 @@ function Resources() {}
 
 
 Resources.images = {
-    loading : "img/loading.png",
+    title : "img/title.png",
     face : "img/face.png",
     star : "img/star.png",
     bullet : "img/bullet.png",
@@ -73,4 +73,10 @@ Resources.pixelFonts = {
 
 
 Resources.sounds = {
+    music : { source : ["audio/music.ogg", "audio/music.mp3"], instances : 1 },
+    bump : { source : ["audio/bump.ogg", "audio/bump.mp3"], instances : 20 },
+    death : { source : ["audio/death.ogg", "audio/death.mp3"], instances : 10 },
+    spawn : { source : ["audio/spawn.ogg", "audio/spawn.mp3"], instances : 10 },
+    pickupbox : { source : ["audio/pickupbox.ogg", "audio/pickupbox.mp3"], instances : 10 },
+    fire : { source : ["audio/fire.ogg", "audio/fire.mp3"], instances : 20 }
 };

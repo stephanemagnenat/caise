@@ -1,11 +1,22 @@
 function Player() {
 
     this.buttonControls = new Vec2(0, 0);
+
+    this.musicCountdown = 0;
 }
 
 
 Player.prototype.shoot = function() {
     websocketManager.send({ action : "weapon_trigger" });
+};
+
+
+Player.prototype.updateMusic = function() {
+    this.musicCountdown -= Timer.delta;
+    if(this.musicCountdown <= 0) {
+        Sound.play("music");
+        this.musicCountdown = 57.5;
+    }
 };
 
 

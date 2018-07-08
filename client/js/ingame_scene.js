@@ -21,6 +21,8 @@ IngameScene.show = function() {
         player.shoot();
     });
 
+
+
 };
 
 
@@ -52,6 +54,8 @@ IngameScene.update = function() {
     camera.update();
 
     panel.update();
+
+    player.updateMusic();
 
 };
 

@@ -1,6 +1,13 @@
 function Panel() {
 
     this.logs = [];
+
+    this.title = new Text({
+        size : 42,
+        font : "Fredoka One",
+        align : "left",
+        color : "#ff5988"
+    });
 }
 
 
@@ -59,6 +66,9 @@ Panel.prototype.update = function() {
 
 Panel.prototype.draw = function() {
 
+
+    // log
+
     c.save();
     c.translate((Game.width - Panel.WIDTH) * 0.5, 0);
 
@@ -70,19 +80,78 @@ Panel.prototype.draw = function() {
 
     c.restore();
 
+
+    // scores
+
     c.save();
     c.translate(Game.width - Panel.WIDTH, 0);
 
-    c.fillStyle = "#fff";
-
-    Utils.drawRoundedCornerRect(0, 10, 300, 500, 10);
+    c.fillStyle = "#fff5f7";
+    Utils.drawRoundedCornerRect(0, 10, 300, 500, 25);
     c.fill();
 
-    Utils.drawRoundedCornerRect(0, 520, 300, 300, 10);
+    c.fillStyle = "#ffd6e1";
+    Utils.drawRoundedCornerRect(0, 10, 300, 100, 25);
     c.fill();
 
-    Utils.drawRoundedCornerRect(0, 830, 300, 240, 10);
+    this.title.drawPosText(20, 90, "Leaderboard");
+
+    c.lineWidth = 8;
+    c.strokeStyle = "#ff5988";
+    Utils.drawRoundedCornerRect(0, 10, 300, 500, 25);
+    c.stroke();
+
+    c.restore();
+
+
+    // rules
+
+    c.save();
+    c.translate(Game.width - Panel.WIDTH, 515);
+
+    c.fillStyle = "#fff5f7";
+    Utils.drawRoundedCornerRect(0, 10, 300, 310, 25);
     c.fill();
+
+    c.fillStyle = "#ffd6e1";
+    Utils.drawRoundedCornerRect(0, 10, 300, 74, 25);
+    c.fill();
+
+    this.title.drawPosText(20, 64, "Rules");
+
+    c.lineWidth = 8;
+    c.strokeStyle = "#ff5988";
+    Utils.drawRoundedCornerRect(0, 10, 300, 310, 25);
+    c.stroke();
+
+    c.restore();
+
+
+
+    // weapon
+
+    c.save();
+    c.translate(Game.width - Panel.WIDTH, 840);
+
+    c.fillStyle = "#fff5f7";
+    Utils.drawRoundedCornerRect(0, 10, 300, 220, 25);
+    c.fill();
+
+    c.fillStyle = "#ffd6e1";
+    Utils.drawRoundedCornerRect(0, 10, 300, 74, 25);
+    c.fill();
+
+    this.title.drawPosText(20, 64, "Weapon");
+
+    if(websocketManager.id !== null && surpManager.surps.hasOwnProperty(websocketManager.id) && surpManager.surps[websocketManager.id].weapon !== -1) {
+        let sprites = [4, 0, 1, 2, 3, 5, 6];
+        Img.drawSpriteScaled("bullet", 150 - 36, 110, 72, 72, sprites[surpManager.surps[websocketManager.id].weapon], 0, 0.5);
+    }
+
+    c.lineWidth = 8;
+    c.strokeStyle = "#ff5988";
+    Utils.drawRoundedCornerRect(0, 10, 300, 220, 25);
+    c.stroke();
 
     c.restore();
 

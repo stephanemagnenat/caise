@@ -32,6 +32,7 @@ WebsocketManager.prototype.processMessage = function(event) {
     switch (data.type) {
 
         case "player_welcome" :
+            Sound.play("spawn");
             this.id = data.id;
             break;
 

@@ -111,6 +111,7 @@ Surp.prototype.updateData = function(data) {
     let newSpeed = new Vec2(data.speed[0], data.speed[1]);
 
     if(this.isInRangeOfHole() && this.isInSpawnArea(newPos) && newSpeed.norm() < 0.001) {
+        Sound.play("death");
         this.fallInHoleCooldown = 1.0;
         this.faceExpression = 2;
         this.lagFixes = [];
@@ -125,7 +126,11 @@ Surp.prototype.updateData = function(data) {
 
     this.weapon = data.weapon;
     this.power = data.power;
+    let oldHasBall = this.hasBall;
     this.hasBall = data.has_ball;
+    if(oldHasBall != this.hasBall) {
+        Sound.play("bump");
+    }
     if(this.faceExpression !== 2) {
         this.faceExpression = this.hasBall ? 1 : 0;
     }
@@ -165,6 +170,7 @@ Surp.prototype.update = function() {
             this.fallInHoleCooldown = 0.0;
             this.faceExpression = this.hasBall ? 1 : 0;
             this.spawnAni = 1.0;
+            Sound.play("spawn");
             if(websocketManager.id === this.id){
                 camera.resetHistory();
             }

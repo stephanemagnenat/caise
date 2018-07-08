@@ -13,7 +13,7 @@ Settings.Game.PREVENT_CONTEXT_MENU = true;
 
 Settings.Game.DEFAULT_SOUND_VOLUME = 50;
 
-Settings.Game.DEBUG = true;
+Settings.Game.DEBUG = false;
 Settings.Game.SHOW_PERFORMANCE_DETAILS = false;
 
 
@@ -50,6 +50,6 @@ Settings.Loading.PIXEL_FONT_PERCENTAGE = 5;
 Settings.Loading.WEB_FONT_PERCENTAGE = 10;
 Settings.Loading.FAKE_PERCENTAGE = 40;
 
-Settings.Loading.FAKE_LOADING_TIME = 0.0;
+Settings.Loading.FAKE_LOADING_TIME = 3.0;
 
 Settings.Loading.TIME_BEFORE_SOUND_LOADING_FAIL = 5.0;

@@ -21,22 +21,21 @@ LoadingScene.update = function() {
 
 LoadingScene.draw = function() {
 
-    var gradient = c.createLinearGradient(0, 0, 0, Game.height);
-    gradient.addColorStop(0, "#111");
-    gradient.addColorStop(1, "#333");
-
-    c.fillStyle = gradient;
+    c.fillStyle = "#61CF8F";
     c.fillRect(0, 0, Game.width, Game.height);
 
-    if(Img.isLoaded("loading")) {
-        Img.draw("loading", Game.centerX - 200, Game.centerY - 200);
+    if(Img.isLoaded("title")) {
+        Img.drawScaled("title", Game.centerX - 270, Game.centerY - 333, 0.5);
     }
 
-    c.fillStyle = "#666";
+    c.fillStyle = "#ff5988";
+    Utils.drawRoundedCornerRect(Game.centerX - 105, Game.height - 65, 210, 20, 5);
+    c.fill();
+
+    c.fillStyle = "#ffadad";
     c.fillRect(Game.centerX - 100, Game.height - 60, 200, 10);
 
-    c.fillStyle = "#eee";
+    c.fillStyle = "#fff";
     c.fillRect(Game.centerX - 100, Game.height - 60, 200 * (LoadingScene.percentage / 100.0), 10);
 
-    Text.draw(Game.centerX, Game.height - 70, 16, "sans-serif", "center", "#eee", Math.ceil(LoadingScene.percentage) + "%");
 };
