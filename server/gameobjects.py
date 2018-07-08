@@ -48,9 +48,6 @@ def _is_on_hole(pos, mx, my):
 		return False
 	return True
 
-def _numpy_rounded(v):
-	return list(map(lambda x: round(x,3), v.tolist()))
-
 def clip_to_field(pos):
 	for my in [-1,1]:
 		for mx in [-1,1]:
@@ -106,11 +103,15 @@ class GameObject(ABC):
 		pass
 
 	def get_json_state(self, full):
+		# round pos and speed
+		self.pos = np.round(self.pos, 4)
+		self.speed = np.round(self.speed, 4)
+		# build state
 		json_state = {
 			'id': self.id,
-			'pos': _numpy_rounded(self.pos),
-			'speed': _numpy_rounded(self.speed),
-			'speed_hl': round(self.speed_hl, 3)
+			'pos': self.pos.tolist(),
+			'speed': self.speed.tolist(),
+			'speed_hl': self.speed_hl
 		}
 		if full:
 			json_state['object'] = self.get_object_type()
