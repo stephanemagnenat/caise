@@ -120,3 +120,34 @@ SurpManager.prototype.draw = function() {
     }
 
 };
+
+
+SurpManager.prototype.getHighscores = function() {
+
+    let highscores = [];
+    let surp;
+
+    for(let surpIndex in this.surps) {
+        surp = this.surps[surpIndex];
+        if(!surp.disconnected) {
+            highscores.push({
+                id : surp.id,
+                name : surp.name,
+                score : surp.score
+            });
+        }
+    }
+    highscores.sort(this.scoreComparator);
+    return highscores;
+};
+
+
+SurpManager.prototype.scoreComparator = function(a, b) {
+    if(a.score > b.score) {
+        return -1;
+    }
+    if(a.score < b.score) {
+        return 1;
+    }
+    return 0;
+};

@@ -105,6 +105,7 @@ Surp.updateAnimations = function() {
 
 Surp.prototype.updateData = function(data) {
 
+    let oldScore = this.score;
     this.score = data.score;
 
     let newPos = new Vec2(data.pos[0], data.pos[1]);
@@ -128,8 +129,11 @@ Surp.prototype.updateData = function(data) {
     this.power = data.power;
     let oldHasBall = this.hasBall;
     this.hasBall = data.has_ball;
-    if(oldHasBall != this.hasBall) {
+    if(oldHasBall !== this.hasBall) {
         Sound.play("bump");
+        if(this.id === websocketManager.id && this.hasBall) {
+            panel.addLog("You picked up the star!");
+        }
     }
     if(this.faceExpression !== 2) {
         this.faceExpression = this.hasBall ? 1 : 0;

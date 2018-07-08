@@ -59,6 +59,12 @@ Resources.images = {
     grass194 : "img/grass_194.png",
     grass197 : "img/grass_197.png",
     grass200 : "img/grass_200.png",
+    leaderboardBlueStar : "img/leaderboard_bluestar.png",
+    leaderboardFace : "img/leaderboard_face.png",
+    ruleFace : "img/rule_face.png",
+    powerFace : "img/power_face.png",
+    rounded : "img/rounded.png",
+    spiky : "img/spiky.png"
 };
 
 

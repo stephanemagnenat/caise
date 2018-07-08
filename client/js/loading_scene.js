@@ -29,13 +29,13 @@ LoadingScene.draw = function() {
     }
 
     c.fillStyle = "#ff5988";
-    Utils.drawRoundedCornerRect(Game.centerX - 105, Game.height - 65, 210, 20, 5);
+    Utils.drawRoundedCornerRect(Game.centerX - 110, Game.height - 110, 220, 30, 10);
     c.fill();
 
     c.fillStyle = "#ffadad";
-    c.fillRect(Game.centerX - 100, Game.height - 60, 200, 10);
+    c.fillRect(Game.centerX - 100, Game.height - 100, 200, 10);
 
     c.fillStyle = "#fff";
-    c.fillRect(Game.centerX - 100, Game.height - 60, 200 * (LoadingScene.percentage / 100.0), 10);
+    c.fillRect(Game.centerX - 100, Game.height - 100, 200 * (LoadingScene.percentage / 100.0), 10);
 
 };

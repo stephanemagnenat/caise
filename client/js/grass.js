@@ -56,6 +56,11 @@ Grass.sprites = [
     { name : "grass194", x : 3705, y : 4323, w : 120, h : 170 },
     { name : "grass197", x : 2323, y : 4329, w : 236, h : 173 },
     { name : "grass200", x : 3029, y : 4479, w : 277, h : 186 },
+
+    { name : "rounded", x : 264,  y : 144, w : 432, h : 432 },
+    { name : "spiky", x : 6024, y : 144, w : 432, h : 432 },
+    { name : "spiky", x : 264, y : 4224, w : 432, h : 432 },
+    { name : "rounded", x : 6024, y : 4224, w : 432, h : 432 },
 ];
 
 
