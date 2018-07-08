@@ -218,10 +218,10 @@ async def run_state():
 					del(state.bullets[bullet_id])
 					if bullet.weapon < 6:
 						player.color = float(bullet.weapon) / 6.
-						await notify_players(player, message_object_status)
 					else:
-						pass
-						# TODO: handle cat
+						player.last_slowdown_hit = cur_time
+						player.speed *= SLOWDOWN_FACTOR
+					await notify_players(player, message_object_status)
 
 			# weapon firing
 			if player.weapon_fired:
