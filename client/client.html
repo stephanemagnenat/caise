@@ -72,7 +72,9 @@
 				ctx.fill();
 				ctx.fillStyle = 'rgb(0,0,0)';
 				if (my_id !== null) {
-					ctx.fillText(objects[my_id].weapon, 100, 10);
+					if  (objects[my_id]) {
+						ctx.fillText(objects[my_id].weapon, 100, 10);
+					}
 				}
 				for (const [id, data] of Object.entries(objects)) {
 					var x = data.pos[0]*4 + 280

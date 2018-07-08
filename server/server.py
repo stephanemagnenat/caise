@@ -68,7 +68,9 @@ async def notify_players(source_object, messager_builder_function):
 async def register(websocket):
 	# receive the name from this player
 	name = await websocket.recv()
-	# TODO: check for name duplications
+	for _, other_player in state.players.items():
+		if name == other_player.name:
+			name += str(random.randint(0,1000))
 	player = Player(name, state.next_gameobject_id)
 	player.pos[1] = 10
 	await websocket.send(json.dumps(message_player_welcome(player)))
