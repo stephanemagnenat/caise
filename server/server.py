@@ -127,19 +127,24 @@ async def run_state():
 		cur_time = time.time()
 		delta_time = cur_time - last_time
 
-		# game mechanics
+		# TODO: garbage collect disconnected players
+
+		# find ball
+		ball_pos = None
+		player_with_ball = None
+		if state.ball is not None:
+			ball_pos = state.ball.pos
+		if ball_pos is None:
+			for _, player in state.players.items():
+				if player.has_ball:
+					player_with_ball = player
+					ball_pos = player.pos
+					break
+		assert ball_pos is not None
+
+		# spikiness scoring
 		if cur_time - last_scoring_time > SCORING_PERIOD:
 			last_scoring_time = cur_time
-			## find ball
-			ball_pos = None
-			if state.ball is not None:
-				ball_pos = state.ball.pos
-			if ball_pos is None:
-				for _, player in state.players.items():
-					if player.has_ball:
-						ball_pos = player.pos
-						break
-			assert ball_pos is not None
 			ball_dist = norm(ball_pos)
 			if ball_dist > WORLD_CIRCLE_INNER_RADIUS and ball_dist < WORLD_CIRCLE_RADIUS:
 				# ball is in rainbow circle, change points
@@ -149,9 +154,30 @@ async def run_state():
 					color_v = np.array([math.cos(alpha), math.sin(alpha)])
 					similarity = np.inner(ball_pos, color_v) / ball_dist
 					delta_points = int(round(similarity * IN_RAINBOW_DELTA_POINTS))
-					player.score += delta_points
 					if delta_points != 0:
+						player.score += delta_points
 						await notify_players(player, message_object_status)
+
+		# goal scoring
+		if abs(ball_pos[1]) > WORLD_PASSAGEWAY_HALF_WIDTH and abs(ball_pos[0]) > WORLD_CIRCLE_RADIUS:
+			spikiness_score = -np.sign(ball_pos[0] * ball_pos[1])
+			if spikiness_score != 0:
+				# remove ball from player
+				if player_with_ball is not None:
+					player_with_ball.has_ball = False
+				# goal, give points to players
+				for _, player in state.players.items():
+					delta_points = int(round(spikiness_score * (player.spikiness-0.5) * 2 * GOALS_DELTA_POINTS))
+					if delta_points != 0 or player == player_with_ball:
+						player.score += delta_points
+						await notify_players(player, message_object_status)
+				# replace ball on center
+				if state.ball is None:
+					state.ball = Ball(0)
+					await notify_players(state.ball, message_object_new)
+				else:
+					state.ball.pos[:] = [0,0]
+					await notify_players(state.ball, message_object_status)
 
 		# boxes
 		if cur_time - last_box_time > BOX_RESPAWN_INTERVAL and len(state.boxes) < BOX_MAX_COUNT:
@@ -192,10 +218,10 @@ async def run_state():
 					del(state.bullets[bullet_id])
 					if bullet.weapon < 6:
 						player.color = float(bullet.weapon) / 6.
-						await notify_players(player, message_object_status)
 					else:
-						pass
-						# TODO: handle cat
+						player.last_slowdown_hit = cur_time
+						player.speed *= SLOWDOWN_FACTOR
+					await notify_players(player, message_object_status)
 
 			# weapon firing
 			if player.weapon_fired:

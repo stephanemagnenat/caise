@@ -169,10 +169,11 @@ class Player(GameObject):
 		self.last_dir = np.array([1,0])
 		self.color = random.uniform(0,1)
 		self.spikiness = random.uniform(0,1)
-		self.weapon_fired = False
-		self.last_time_weapon_fired = 0.
 		self.weapon = -1
 		self.power = -1
+		self.weapon_fired = False
+		self.last_time_weapon_fired = 0.
+		self.last_slowdown_hit = 0
 
 	def move(self, speed, factor):
 		self.speed_cmd = np.array(speed) * factor
@@ -189,14 +190,16 @@ class Player(GameObject):
 		# can we apply speed?
 		old_speed = self.speed
 		if not self.is_stunned(cur_time):
-			#self.speed = self.speed_cmd
-			self.set_speed(self.speed_cmd)
+			factor = 1.
+			if cur_time - self.last_slowdown_hit < SLOWDOWN_DURATION:
+				factor = 0.5
+			self.set_speed(self.speed_cmd * factor)
 		# do the step
 		need_update = super(Player, self).step(dt, cur_time)
 		# is on hole
 		if is_on_hole(self.pos):
 			print("in hole!!")
-			# TODO: find good place
+			# TODO: find good place to respawn
 			self.pos[:] = [0,0]
 			self.speed[:] = [0,0]
 			self.speed_hl = 0.

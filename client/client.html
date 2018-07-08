@@ -71,6 +71,9 @@
 				ctx.lineTo(280-60, 200-l);
 				ctx.fill();
 				ctx.fillStyle = 'rgb(0,0,0)';
+				if (my_id !== null) {
+					ctx.fillText(objects[my_id].weapon, 100, 10);
+				}
 				for (const [id, data] of Object.entries(objects)) {
 					var x = data.pos[0]*4 + 280
 					var y = data.pos[1]*4 + 200
@@ -159,6 +162,7 @@
 								// update variables
 								object.score = data.score;
 								object.has_ball = data.has_ball;
+								object.weapon = data.weapon;
 							}
 							break;
 						case 'object_part':
