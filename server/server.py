@@ -193,7 +193,7 @@ async def run_state():
 					if roll == 12:
 						player.weapon = 7
 					else:
-						player.weapon = roll / 2
+						player.weapon = int(roll / 2)
 					await notify_players(player, message_object_status)
 
 			# collision with other player
