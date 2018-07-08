@@ -38,25 +38,30 @@ state = GameState()
 def message_object_new(gameobject):
 	message = gameobject.get_json_state(True)
 	message['type'] = 'object_new'
-	return json.dumps(message)
+	return message
 
 def message_object_status(gameobject):
 	message = gameobject.get_json_state(False)
 	message['type'] = 'object_state'
-	return json.dumps(message)
+	return message
 
 def message_object_part(gameobject):
-	return json.dumps({'type': 'object_part', 'id': gameobject.id})
+	return {'type': 'object_part', 'id': gameobject.id}
 
 def message_player_welcome(player):
-	return json.dumps({'type': 'player_welcome', 'id': player.id})
+	return {'type': 'player_welcome', 'id': player.id}
 
 ## notification helper methods
 
-async def notify_players(source_player, messager_builder_function):
+async def notify_players(source_object, messager_builder_function):
 	if state.players:       # asyncio.wait doesn't accept an empty list
-		message = messager_builder_function(source_player)
-		await asyncio.wait([websocket.send(message) for websocket in state.players])
+		message = messager_builder_function(source_object)
+		string_message = json.dumps(message)
+		# if message equal to previous one, skip sending
+		if message['type'] != 'object_state' or message != source_object.last_state_msg:
+			await asyncio.wait([websocket.send(string_message) for websocket in state.players])
+			if message['type'] == 'object_state':
+				source_object.last_state_msg = message
 
 ## network processing callbacks
 
@@ -66,15 +71,15 @@ async def register(websocket):
 	# TODO: check for name duplications
 	player = Player(name, state.next_gameobject_id)
 	player.pos[1] = 10
-	await websocket.send(message_player_welcome(player))
+	await websocket.send(json.dumps(message_player_welcome(player)))
 	state.next_gameobject_id += 1
 	# send the current state to this player
 	if state.ball:
-		await websocket.send(message_object_new(state.ball))
+		await websocket.send(json.dumps(message_object_new(state.ball)))
 	for other_websocket, other_player in state.players.items():
-		await websocket.send(message_object_new(other_player))
+		await websocket.send(json.dumps(message_object_new(other_player)))
 	for _, box in state.boxes.items():
-		await websocket.send(message_object_new(box))
+		await websocket.send(json.dumps(message_object_new(box)))
 	# add to the list of players
 	state.players[websocket] = player
 	# tell all players about this new one

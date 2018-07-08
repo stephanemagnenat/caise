@@ -105,8 +105,8 @@ class GameObject(ABC):
 
 	def get_json_state(self, full):
 		# round pos and speed
-		self.pos = np.round(self.pos, 4)
-		self.speed = np.round(self.speed, 4)
+		self.pos = np.round(self.pos, 3)
+		self.speed = np.round(self.speed, 3)
 		# build state
 		json_state = {
 			'id': self.id,
@@ -174,6 +174,7 @@ class Player(GameObject):
 		self.weapon_fired = False
 		self.last_time_weapon_fired = 0.
 		self.last_slowdown_hit = 0
+		self.last_state_msg = None
 
 	def move(self, speed, factor):
 		self.speed_cmd = np.array(speed) * factor
