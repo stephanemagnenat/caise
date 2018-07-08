@@ -4,6 +4,7 @@ import random
 from abc import ABC, abstractmethod
 
 from constants import *
+from utils import *
 
 def _clip_field(pos, mx, my):
 	# if wrong quadrant, return
@@ -47,9 +48,6 @@ def _is_on_hole(pos, mx, my):
 	if test_pos_length >= WORLD_CIRCLE_INNER_RADIUS:
 		return False
 	return True
-
-def _numpy_rounded(v):
-	return list(map(lambda x: round(x,3), v.tolist()))
 
 def clip_to_field(pos):
 	for my in [-1,1]:
@@ -106,11 +104,15 @@ class GameObject(ABC):
 		pass
 
 	def get_json_state(self, full):
+		# round pos and speed
+		self.pos = np.round(self.pos, 4)
+		self.speed = np.round(self.speed, 4)
+		# build state
 		json_state = {
 			'id': self.id,
-			'pos': _numpy_rounded(self.pos),
-			'speed': _numpy_rounded(self.speed),
-			'speed_hl': round(self.speed_hl, 3)
+			'pos': self.pos.tolist(),
+			'speed': self.speed.tolist(),
+			'speed_hl': self.speed_hl
 		}
 		if full:
 			json_state['object'] = self.get_object_type()
@@ -141,6 +143,21 @@ class SuperBox(GameObject):
 		return "superbox"
 
 
+class Bullet(GameObject):
+	def __init__(self, id, weapon):
+		GameObject.__init__(self, id, 0.5)
+		self.weapon = weapon
+
+	def get_object_type(self):
+		return "bullet"
+
+	def get_json_state(self, full):
+		json_state = super(Bullet, self).get_json_state(full)
+		if full:
+			json_state['weapon'] = self.weapon
+		return json_state
+
+
 class Player(GameObject):
 	def __init__(self, name, id):
 		GameObject.__init__(self, id, 1.5)
@@ -149,19 +166,31 @@ class Player(GameObject):
 		self.score = 0
 		self.last_time_stunned = 0.
 		self.speed_cmd = np.zeros(2)
+		self.last_dir = np.array([1,0])
 		self.color = random.uniform(0,1)
 		self.spikiness = random.uniform(0,1)
+		self.weapon_fired = False
+		self.last_time_weapon_fired = 0.
 		self.weapon = -1
 		self.power = -1
 
 	def move(self, speed, factor):
 		self.speed_cmd = np.array(speed) * factor
 
+	def fire(self):
+		self.weapon_fired = True
+
+	def set_speed(self, speed):
+		self.speed = speed
+		if np.any(self.speed):
+			self.last_dir = unitv(self.speed)
+
 	def step(self, dt, cur_time):
 		# can we apply speed?
 		old_speed = self.speed
 		if not self.is_stunned(cur_time):
-			self.speed = self.speed_cmd
+			#self.speed = self.speed_cmd
+			self.set_speed(self.speed_cmd)
 		# do the step
 		need_update = super(Player, self).step(dt, cur_time)
 		# is on hole
