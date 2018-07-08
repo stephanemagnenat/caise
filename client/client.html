@@ -141,6 +141,9 @@
 				websocket.onmessage = function (event) {
 					data = JSON.parse(event.data);
 					switch (data.type) {
+						case 'server_full':
+							alert("Server full, capacity: " + data.capacity);
+							break;
 						case 'player_welcome':
 							my_id = data.id;
 							break;

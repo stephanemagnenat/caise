@@ -1,8 +1,5 @@
 #!/usr/bin/env python3.6
 
-# inspired from https://websockets.readthedocs.io/en/stable/intro.html
-# WS server example
-
 import asyncio
 import json
 import logging
@@ -106,9 +103,12 @@ async def unregister(websocket):
 ## client processing code
 
 async def process_client(websocket, path):
-	# register(websocket) sends user_event() to websocket
 
 	await state.lock.acquire()
+	if len(state.players) >= MAX_PLAYER_COUNT:
+		await websocket.send('{"type":"server_full","capacity":' + str(MAX_PLAYER_COUNT) + '}')
+		state.lock.release()
+		return
 	player = await register(websocket)
 	state.lock.release()
 
