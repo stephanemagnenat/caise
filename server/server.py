@@ -87,6 +87,11 @@ async def unregister(websocket):
 	del state.players[websocket]
 	# tell others players about this disconnection
 	await notify_players(player, message_object_part)
+	# if has ball, release it
+	if player.has_ball:
+		state.ball = Ball(0)
+		state.ball.pos = player.pos
+		await notify_players(state.ball, message_object_new)
 	print(f"> {player.name} disconnected")
 
 ## client processing code
