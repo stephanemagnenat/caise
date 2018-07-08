@@ -29,6 +29,7 @@ class GameState:
 		self.bullets = {}
 		self.ball = Ball(0)
 		self.next_gameobject_id = 1
+		self.lock = asyncio.Lock()
 
 state = GameState()
 
@@ -99,11 +100,17 @@ async def unregister(websocket):
 
 async def process_client(websocket, path):
 	# register(websocket) sends user_event() to websocket
+
+	await state.lock.acquire()
 	player = await register(websocket)
+	state.lock.release()
+
 	try:
 		# process messages from this player
 		async for message in websocket:
 			data = json.loads(message)
+
+			await state.lock.acquire()
 			if data['action'] == 'move':
 				# set the speed of the player
 				player.move(data['speed'], 0.1)
@@ -113,8 +120,12 @@ async def process_client(websocket, path):
 				logging.info("Got power trigger, unimplemented yet")
 			else:
 				logging.error("unsupported event: {}", data)
+			state.lock.release()
+
 	finally:
+		await state.lock.acquire()
 		await unregister(websocket)
+		state.lock.release()
 
 ## server-side state update
 
@@ -123,11 +134,12 @@ async def run_state():
 	last_box_time = last_time
 	last_scoring_time = last_time
 	while True:
+
+		await state.lock.acquire()
+
 		# main game logic loop
 		cur_time = time.time()
 		delta_time = cur_time - last_time
-
-		# TODO: garbage collect disconnected players
 
 		# find ball
 		ball_pos = None
@@ -319,7 +331,11 @@ async def run_state():
 						await notify_players(state.ball, message_object_new)
 					await notify_players(player, message_object_status)
 					await notify_players(other, message_object_status)
+
 		last_time = cur_time
+
+		state.lock.release()
+
 		await asyncio.sleep(UPDATE_PERIOD)
 
 ## main code
