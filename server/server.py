@@ -161,7 +161,7 @@ async def run_state():
 					break
 		assert ball_pos is not None
 
-		# spikiness scoring
+		# rainbow scoring
 		if cur_time - last_scoring_time > SCORING_PERIOD:
 			last_scoring_time = cur_time
 			ball_dist = norm(ball_pos)
@@ -187,6 +187,8 @@ async def run_state():
 				# goal, give points to players
 				for _, player in state.players.items():
 					delta_points = int(round(spikiness_score * (player.spikiness-0.5) * 2 * GOALS_DELTA_POINTS))
+					if player == player_with_ball:
+						delta_points *= GOAL_PLAYER_FACTOR
 					if delta_points != 0 or player == player_with_ball:
 						player.score += delta_points
 						await notify_players(player, message_object_status)
