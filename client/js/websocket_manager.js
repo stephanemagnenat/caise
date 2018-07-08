@@ -36,7 +36,10 @@ WebsocketManager.prototype.processMessage = function(event) {
             break;
 
         case "object_new" :
-            if(data.object === "player") {
+            if(data.object === "bullet") {
+                bulletManager.addBullet(data);
+
+            } else if(data.object === "player") {
                 surpManager.addSurp(data);
 
             } else if(data.object === "box") {
@@ -48,18 +51,11 @@ WebsocketManager.prototype.processMessage = function(event) {
             } else {
                 console.log(data);
             }
-            /*objects[data.id] = data;
-            if (data.object === 'player') {
-                logArea.textContent += data.name + " connected\n";
-            }*/
             break;
 
         case "object_state" :
             if(surpManager.isSurp(data.id)) {
                 surpManager.updateSurp(data.id, data);
-
-            } else if(boxManager.isBox(data.id)) {
-                boxManager.updateBox(data.id, data);
 
             } else if(field.isBall(data.id)) {
                 field.updateBall(data);
@@ -70,7 +66,10 @@ WebsocketManager.prototype.processMessage = function(event) {
             break;
 
         case "object_part" :
-            if(surpManager.isSurp(data.id)) {
+            if(bulletManager.isBullet(data.id)) {
+                bulletManager.deleteBullet(data.id);
+
+            } else if(surpManager.isSurp(data.id)) {
                 surpManager.deleteSurp(data.id);
 
             } else if(boxManager.isBox(data.id)) {

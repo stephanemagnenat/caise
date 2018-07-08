@@ -6,6 +6,7 @@ var camera;
 var player;
 var surpManager;
 var boxManager;
+var bulletManager;
 var websocketManager;
 var panel;
 

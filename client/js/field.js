@@ -6,6 +6,7 @@ function Field() {
 
     this.ballId = -1;
     this.ball = null;
+    this.ballLagFixes = [];
 
     this.ballAni = 0;
     this.ballAniHeight = 0;
@@ -16,6 +17,7 @@ Field.prototype.addBall = function(data) {
     this.ballId = data.id;
     this.ball = {
         id : data.id,
+        pos : new Vec2(data.pos[0], data.pos[1]),
         drawPos : new Vec2(data.pos[0], data.pos[1]),
         speed : new Vec2(data.speed[0], data.speed[1]),
         speedHl : data.speed_hl,
@@ -37,6 +39,10 @@ Field.prototype.isBall = function(id) {
 
 Field.prototype.updateBall = function(data) {
     if(this.ball !== null) {
+
+        let newPos = new Vec2(data.pos[0], data.pos[1]);
+        this.ballLagFixes.push({ delta : this.ball.pos.subtract(newPos), effect : 1.0 });
+        this.ball.pos = newPos;
         this.ball.drawPos = new Vec2(data.pos[0], data.pos[1]);
         this.ball.speed = new Vec2(data.speed[0], data.speed[1]);
         this.ball.speedHl = data.speed_hl;
@@ -47,6 +53,7 @@ Field.prototype.updateBall = function(data) {
 Field.prototype.deleteBall = function() {
     this.ballId = -1;
     this.ball = null;
+    this.ballLagFixes = [];
 };
 
 
@@ -100,7 +107,24 @@ Field.prototype.update = function() {
             this.ballAni -= 1.0;
         }
         this.ballAniHeight = 0.5 - (0.5 * Math.cos(TWO_PI * this.ballAni));
-        // TODO
+
+        this.ball.pos = this.ball.pos.add(this.ball.speed.multiply(Timer.delta));
+        if(this.ball.speedHl > 0) {
+            this.ball.speed = this.ball.speed.multiply(Math.pow(2, -Timer.delta / this.ball.speedHl));
+        }
+
+        this.ball.drawPos = this.ball.pos;
+        let newLagFixes = [];
+        let lagFix;
+        for(let i = 0; i < this.ballLagFixes.length; i++) {
+            lagFix = this.ballLagFixes[i];
+            lagFix.effect -= Timer.delta * 3.0;
+            if(lagFix.effect > 0) {
+                this.ball.drawPos = this.ball.drawPos.add(lagFix.delta.multiply(lagFix.effect));
+                newLagFixes.push(lagFix);
+            }
+        }
+        this.ballLagFixes = newLagFixes;
     }
 };
 
@@ -332,6 +356,8 @@ Field.prototype.draw = function() {
     this.grass.draw();
 
     surpManager.draw();
+
+    bulletManager.draw();
 
     camera.restore();
 

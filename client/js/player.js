@@ -4,6 +4,11 @@ function Player() {
 }
 
 
+Player.prototype.shoot = function() {
+    websocketManager.send({ action : "weapon_trigger" });
+};
+
+
 Player.prototype.updateControls = function() {
 
     let newControls = Utils.getArrowControls();
@@ -26,6 +31,12 @@ Player.prototype.draw = function() {
     let mySurp = surpManager.surps[websocketManager.id];
     if(mySurp.fallInHoleCooldown > 0.0) {
         c.globalAlpha = 1.0 - mySurp.fallInHoleCooldown;
+        c.fillStyle = "#000";
+        c.fillRect(0, 0, Game.width, Game.height);
+        c.globalAlpha = 1.0;
+    }
+    if(mySurp.spawnAni > 0.0) {
+        c.globalAlpha = mySurp.spawnAni;
         c.fillStyle = "#000";
         c.fillRect(0, 0, Game.width, Game.height);
         c.globalAlpha = 1.0;

@@ -8,6 +8,7 @@ IngameScene.show = function() {
     player = new Player();
     surpManager = new SurpManager();
     boxManager = new BoxManager();
+    bulletManager = new BulletManager();
 
     let tempHost = window.prompt("Please enter Host", "192.168.2.20");
     let tempName = window.prompt("Please enter your name, Sir Prise.", "");
@@ -15,6 +16,10 @@ IngameScene.show = function() {
     websocketManager.connect();
 
     panel = new Panel();
+
+    Keyboard.registerKeyDownHandler(Keyboard.SPACE_BAR, function() {
+        player.shoot();
+    });
 
 };
 
@@ -43,6 +48,7 @@ IngameScene.update = function() {
     player.updateControls();
     field.update();
     surpManager.update();
+    bulletManager.update();
     camera.update();
 
     panel.update();

@@ -5,12 +5,16 @@ function SurpManager() {
     this.holeDrawOrder = [];
     this.drawOrder = [];
 
+    this.initialConnectTime = 2.0;
+
 }
 
 
 SurpManager.prototype.addSurp = function(data) {
     this.surps[data.id] = new Surp(data);
-    // TODO joined message
+    if(this.initialConnectTime == 0.0 && data.id !== WebsocketManager.id) {
+        panel.addLog("Sir " + this.surps[data.id].name + " Prise joined the game.");
+    }
 };
 
 
@@ -26,6 +30,9 @@ SurpManager.prototype.updateSurp = function(id, data) {
 
 SurpManager.prototype.deleteSurp = function(id) {
     this.surps[id].disconnected = true;
+    if(this.initialConnectTime == 0.0 && data.id !== WebsocketManager.id) {
+        panel.addLog("Sir " + this.surps[id].name + " Prise disconnected.");
+    }
 };
 
 
@@ -63,6 +70,13 @@ SurpManager.prototype.update = function() {
 
     this.holeDrawOrder.sort(this.comparator);
     this.drawOrder.sort(this.comparator);
+
+    if(this.initialConnectTime > 0.0) {
+        this.initialConnectTime -= Timer.delta;
+        if(this.initialConnectTime <= 0.0) {
+            this.initialConnectTime = 0.0;
+        }
+    }
 };
 
 

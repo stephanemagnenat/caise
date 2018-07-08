@@ -42,7 +42,10 @@ function Surp(data) {
 
     this.lagFixes = [];
 
+    this.face = Utils.rand(0, 7);
     this.faceExpression = this.hasBall ? 1 : 0;
+
+    this.spawnAni = 1.0;
 
     this.disconnected = false;
     this.deathAni = 0.0;
@@ -50,14 +53,13 @@ function Surp(data) {
     this.label = new Text({
         x : 0,
         y : 0,
-        text : this.name,
-        size : 36,
-        font : "opensans",
+        text : "Sir " + this.name + " Prise",
+        size : 48,
+        font : "Gaegu",
         align : "center",
         color : "#fff",
         borderWidth : 5,
-        borderColor : "#000",
-        letterSpacing : 1
+        borderColor : "#000"
     });
 
 }
@@ -124,9 +126,15 @@ Surp.prototype.updateData = function(data) {
     this.weapon = data.weapon;
     this.power = data.power;
     this.hasBall = data.has_ball;
+    if(this.faceExpression !== 2) {
+        this.faceExpression = this.hasBall ? 1 : 0;
+    }
 
     this.spikiness = data.spikiness;
     this.color = data.color;
+
+    this.colorObj = Color.fromHSL(this.color, 1.0, 0.5);
+    this.halfColorObj = Color.fromHSL(this.color, 0.5, 0.8);
 };
 
 
@@ -147,11 +155,19 @@ Surp.prototype.update = function() {
         return;
     }
 
+    if(this.spawnAni > 0) {
+        this.spawnAni -= 2.0 * Timer.delta;
+    }
+
     if(this.fallInHoleCooldown > 0.0) {
         this.fallInHoleCooldown -= Timer.delta;
         if(this.fallInHoleCooldown <= 0.0) {
             this.fallInHoleCooldown = 0.0;
             this.faceExpression = this.hasBall ? 1 : 0;
+            this.spawnAni = 1.0;
+            if(websocketManager.id === this.id){
+                camera.resetHistory();
+            }
         } else {
 
             this.drawPos = this.drawPos.add(this.lastSpeed.multiply(Timer.delta));
@@ -215,6 +231,9 @@ Surp.prototype.drawShadow = function() {
     if(this.deathAni > 0.0) {
         c.globalAlpha = Utils.limit(1.0 - this.deathAni, 0.0, 1.0);
     }
+    if(this.spawnAni > 0.0) {
+        c.globalAlpha = Utils.limit(1.0 - this.spawnAni, 0.0, 1.0);
+    }
 
     c.save();
     c.translate(this.drawPos.x, this.drawPos.y);
@@ -229,7 +248,7 @@ Surp.prototype.drawShadow = function() {
 
     c.restore();
 
-    if(this.fallInHoleCooldown > 0.0 || this.deathAni > 0.0) {
+    if(this.fallInHoleCooldown > 0.0 || this.deathAni > 0.0 || this.spawnAni > 0.0) {
         c.globalAlpha = 1;
     }
 };
@@ -242,6 +261,9 @@ Surp.prototype.draw = function() {
     }
     if(this.deathAni > 0.0) {
         c.globalAlpha = Utils.limit(1.0 - this.deathAni, 0.0, 1.0);
+    }
+    if(this.spawnAni > 0.0) {
+        c.globalAlpha = Utils.limit(1.0 - this.spawnAni, 0.0, 1.0);
     }
 
     c.save();
@@ -314,8 +336,7 @@ Surp.prototype.draw = function() {
 
     // face
 
-    Img.drawSpriteScaled("face", -1.5 + lookDir, -1.5, 3, 3, 0, 0, 0.0208333);
-
+    Img.drawSpriteScaled("face", -1.5 + lookDir, -1.5, 3, 3, this.face, this.faceExpression, 0.0208333);
 
     // reflection
 
@@ -327,7 +348,7 @@ Surp.prototype.draw = function() {
 
     c.restore();
 
-    if(this.fallInHoleCooldown > 0.0 || this.deathAni > 0.0) {
+    if(this.fallInHoleCooldown > 0.0 || this.deathAni > 0.0 || this.spawnAni > 0.0) {
         c.globalAlpha = 1;
     }
 
@@ -341,6 +362,9 @@ Surp.prototype.drawName = function() {
     if(this.deathAni > 0.0) {
         c.globalAlpha = Utils.limit(1.0 - this.deathAni, 0.0, 1.0);
     }
+    if(this.spawnAni > 0.0) {
+        c.globalAlpha = Utils.limit(1.0 - this.spawnAni, 0.0, 1.0);
+    }
 
     c.save();
     c.translate(this.drawPos.x, this.drawPos.y - 3.2);
@@ -350,7 +374,7 @@ Surp.prototype.drawName = function() {
 
     c.restore();
 
-    if(this.fallInHoleCooldown > 0.0 || this.deathAni > 0.0) {
+    if(this.fallInHoleCooldown > 0.0 || this.deathAni > 0.0 || this.spawnAni > 0.0) {
         c.globalAlpha = 1;
     }
 };

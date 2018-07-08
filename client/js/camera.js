@@ -26,8 +26,11 @@ Camera.prototype.update = function() {
     }
 
     this.pos = totalPos.multiply(1 / totalLengthHistory);
+};
 
 
+Camera.prototype.resetHistory = function() {
+    this.history = [];
 };
 
 

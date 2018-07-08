@@ -29,13 +29,9 @@ BoxManager.prototype.isBox = function(id) {
 };
 
 
-BoxManager.prototype.updateBox = function(id, data) {
-    // TODO
-};
-
-
 BoxManager.prototype.deleteBox = function(id) {
-    // TODO
+    // TODO particles
+    delete this.boxes[id];
 };
 
 
@@ -68,8 +64,7 @@ BoxManager.prototype.draw = function(id) {
     c.save();
     c.translate(box.drawPos.x, box.drawPos.y);
 
-    c.fillStyle = "#c00";
-    c.fillRect(-0.5, -1, 1, 1);
+    Img.drawScaled("weaponBox", -2, -2.5, 0.0208333);
 
     c.restore();
 };

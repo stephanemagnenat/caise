@@ -5,6 +5,8 @@ Resources.images = {
     loading : "img/loading.png",
     face : "img/face.png",
     star : "img/star.png",
+    bullet : "img/bullet.png",
+    weaponBox : "img/weapon_box.png",
     grass03 : "img/grass_03.png",
     grass06 : "img/grass_06.png",
     grass10 : "img/grass_10.png",
@@ -61,8 +63,8 @@ Resources.images = {
 
 
 Resources.webFonts = [
-    "komika",
-    "opensans"
+    "Fredoka One",
+    "Gaegu",
 ];
 
 
