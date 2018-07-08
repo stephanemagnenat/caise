@@ -69,6 +69,7 @@ class GameObject(ABC):
 		self.pos = np.zeros(2)
 		self.speed = np.zeros(2)
 		self.speed_hl = 0
+		self.last_state_msg = None
 
 	def step(self, dt, cur_time):
 		# return true if clipping occurs
@@ -174,7 +175,6 @@ class Player(GameObject):
 		self.weapon_fired = False
 		self.last_time_weapon_fired = 0.
 		self.last_slowdown_hit = 0
-		self.last_state_msg = None
 
 	def move(self, speed, factor):
 		self.speed_cmd = np.array(speed) * factor
