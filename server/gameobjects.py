@@ -4,6 +4,7 @@ import random
 from abc import ABC, abstractmethod
 
 from constants import *
+from utils import *
 
 def _clip_field(pos, mx, my):
 	# if wrong quadrant, return
@@ -142,6 +143,21 @@ class SuperBox(GameObject):
 		return "superbox"
 
 
+class Bullet(GameObject):
+	def __init__(self, id, weapon):
+		GameObject.__init__(self, id, 0.5)
+		self.weapon = weapon
+
+	def get_object_type(self):
+		return "bullet"
+
+	def get_json_state(self, full):
+		json_state = super(Bullet, self).get_json_state(full)
+		if full:
+			json_state['weapon'] = self.weapon
+		return json_state
+
+
 class Player(GameObject):
 	def __init__(self, name, id):
 		GameObject.__init__(self, id, 1.5)
@@ -150,19 +166,31 @@ class Player(GameObject):
 		self.score = 0
 		self.last_time_stunned = 0.
 		self.speed_cmd = np.zeros(2)
+		self.last_dir = np.array([1,0])
 		self.color = random.uniform(0,1)
 		self.spikiness = random.uniform(0,1)
+		self.weapon_fired = False
+		self.last_time_weapon_fired = 0.
 		self.weapon = -1
 		self.power = -1
 
 	def move(self, speed, factor):
 		self.speed_cmd = np.array(speed) * factor
 
+	def fire(self):
+		self.weapon_fired = True
+
+	def set_speed(self, speed):
+		self.speed = speed
+		if np.any(self.speed):
+			self.last_dir = unitv(self.speed)
+
 	def step(self, dt, cur_time):
 		# can we apply speed?
 		old_speed = self.speed
 		if not self.is_stunned(cur_time):
-			self.speed = self.speed_cmd
+			#self.speed = self.speed_cmd
+			self.set_speed(self.speed_cmd)
 		# do the step
 		need_update = super(Player, self).step(dt, cur_time)
 		# is on hole

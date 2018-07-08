@@ -25,6 +25,7 @@ class GameState:
 	def __init__(self):
 		self.players = {}
 		self.boxes = {}
+		self.bullets = {}
 		self.ball = Ball(0)
 		self.next_gameobject_id = 1
 
@@ -101,7 +102,7 @@ async def process_client(websocket, path):
 				# set the speed of the player
 				player.move(data['speed'], 0.1)
 			elif data['action'] == 'weapon_trigger':
-				cur_time = time.time()
+				player.fire()
 			elif data['action'] == 'power_trigger':
 				logging.info("Got power trigger, unimplemented yet")
 			else:
@@ -136,12 +137,44 @@ async def run_state():
 		if state.ball is not None and state.ball.step(delta_time, cur_time):
 			await notify_players(state.ball, message_object_status)
 
+		# bullet collision
+		for bullet_id in list(state.bullets.keys()):
+			bullet = state.bullets[bullet_id]
+			if bullet.step(delta_time, cur_time):
+				await notify_players(bullet, message_object_part)
+				del(state.bullets[bullet_id])
+
 		# loop over players
 		for websocket, player in state.players.items():
 
 			# collisions with walls
 			if player.step(delta_time, cur_time):
 				await notify_players(player, message_object_status)
+
+			# hit by bullet
+			for bullet_id in list(state.bullets.keys()):
+				bullet = state.bullets[bullet_id]
+				if player.does_collide(bullet):
+					await notify_players(bullet, message_object_part)
+					del(state.bullets[bullet_id])
+					if bullet.weapon < 6:
+						player.color = float(bullet.weapon) / 6.
+						await notify_players(player, message_object_status)
+					else:
+						pass
+						# TODO: handle cat
+
+			# weapon firing
+			if player.weapon_fired:
+				player.weapon_fired = False
+				if player.weapon >= 0 and not player.is_stunned(cur_time) and (cur_time - player.last_time_weapon_fired) > WEAPON_COOLDOWN:
+					player.last_time_weapon_fired = cur_time
+					bullet = Bullet(state.next_gameobject_id, player.weapon)
+					state.next_gameobject_id += 1
+					bullet.pos = player.pos + player.last_dir * (player.r + bullet.r + BULLET_SPAWN_DIST)
+					bullet.speed = player.speed + player.last_dir * BULLET_VELOCITY
+					await notify_players(bullet, message_object_new)
+					state.bullets[bullet.id] = bullet
 
 			# ball fetching
 			if state.ball and player.does_collide(state.ball):
@@ -191,8 +224,8 @@ async def run_state():
 					other.pos -= deinterlace_vector * 0.5 + deinterlace_margin
 
 					# apply collision, reduce speed and stun
-					player.speed = 0.5 * prev_other_speed
-					other.speed = 0.5 * prev_player_speed
+					player.set_speed(0.5 * prev_other_speed)
+					other.set_speed(0.5 * prev_player_speed)
 					#player.speed_cmd = player.speed
 					#other.speed_cmd = other.speed
 					player_velocity = norm(player.speed)

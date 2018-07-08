@@ -78,7 +78,7 @@
 					if (data.object === 'player') {
 						ctx.strokeStyle = 'rgb(0,0,0)';
 						ctx.beginPath();
-						ctx.arc(x, y, 4, 0, 2 * Math.PI);
+						ctx.arc(x, y, 1.5*4, 0, 2 * Math.PI);
 						ctx.stroke();
 						ctx.fillStyle = 'rgb(0,0,0)';
 						ctx.fillText(data.name, x, y+20);
@@ -87,14 +87,20 @@
 					if (data.object === 'ball' || (data.object === 'player' && data.has_ball)) {
 						ctx.fillStyle = 'rgb(131,123,0)';
 						ctx.beginPath();
-						ctx.arc(x, y, 2, 0, 2 * Math.PI);
+						ctx.arc(x, y, 0.9*4, 0, 2 * Math.PI);
 						ctx.fill();
 					}
 					if (data.object === 'box') {
 						ctx.strokeStyle = 'rgb(160,0,0)';
 						ctx.beginPath();
-						ctx.rect(x-2, y-2, 4, 4);
+						ctx.rect(x-3, y-3, 6, 6);
 						ctx.stroke();
+					}
+					if (data.object === 'bullet') {
+						ctx.fillStyle = 'rgb(60,60,60)';
+						ctx.beginPath();
+						ctx.arc(x, y, 0.5*4, 0, 2 * Math.PI);
+						ctx.fill();
 					}
 					if (lastRenderTimestamp) {
 						// handle animations
