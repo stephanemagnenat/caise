@@ -7,15 +7,26 @@ import websockets
 import time
 import math
 import numpy as np
+import argparse
 
 from numpy.linalg import norm
 from constants import *
 from utils import *
 from gameobjects import *
 
+# parse command line
+
+parser = argparse.ArgumentParser(description='Server for our game')
+parser.add_argument('--port', type=int, default=40000, help='specify the websocket listening port')
+parser.add_argument('--release', action='store_true', help='release mode, mute debug')
+args = parser.parse_args()
+
 # enable logging
 
-logging.basicConfig(level=logging.DEBUG)
+if args.release:
+	logging.basicConfig(level=logging.WARNING)
+else:
+	logging.basicConfig(level=logging.DEBUG)
 
 # game state
 
@@ -354,5 +365,5 @@ async def run_state():
 ## main code
 
 loop = asyncio.get_event_loop()
-loop.run_until_complete(websockets.serve(process_client, '', 6789))
+loop.run_until_complete(websockets.serve(process_client, '', args.port))
 loop.run_until_complete(run_state())
