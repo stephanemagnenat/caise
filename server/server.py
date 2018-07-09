@@ -213,9 +213,16 @@ async def run_state():
 			await notify_players(box, message_object_new)
 			state.boxes[box.id] = box
 
-		# ball collision
-		if state.ball is not None and state.ball.step(delta_time, cur_time):
-			await notify_players(state.ball, message_object_status)
+		# ball collision with walls or in hole
+		if state.ball is not None:
+			ball_needs_update = state.ball.step(delta_time, cur_time)
+			if is_on_hole(state.ball.pos):
+				state.ball.pos[:] = [0,0]
+				state.ball.speed[:] = [0,0]
+				state.ball.speed_hl = 0
+				ball_needs_update = True
+			if ball_needs_update:
+				await notify_players(state.ball, message_object_status)
 
 		# bullet collision
 		for bullet_id in list(state.bullets.keys()):
