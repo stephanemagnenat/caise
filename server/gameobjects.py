@@ -194,6 +194,7 @@ class Player(GameObject):
 		was_stunned = self.is_stunned
 		old_speed = self.speed
 		# can we apply speed?
+		self.is_stunned = cur_time - self.last_time_stunned < STUNNED_DURATION
 		if not self.is_stunned:
 			factor = 1.
 			if cur_time - self.last_slowdown_hit < SLOWDOWN_DURATION:
