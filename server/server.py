@@ -7,15 +7,26 @@ import websockets
 import time
 import math
 import numpy as np
+import argparse
 
 from numpy.linalg import norm
 from constants import *
 from utils import *
 from gameobjects import *
 
+# parse command line
+
+parser = argparse.ArgumentParser(description='Server for our game')
+parser.add_argument('--port', type=int, default=40000, help='specify the websocket listening port')
+parser.add_argument('--release', action='store_true', help='release mode, mute debug')
+args = parser.parse_args()
+
 # enable logging
 
-logging.basicConfig(level=logging.DEBUG)
+if args.release:
+	logging.basicConfig(level=logging.WARNING)
+else:
+	logging.basicConfig(level=logging.DEBUG)
 
 # game state
 
@@ -213,9 +224,16 @@ async def run_state():
 			await notify_players(box, message_object_new)
 			state.boxes[box.id] = box
 
-		# ball collision
-		if state.ball is not None and state.ball.step(delta_time, cur_time):
-			await notify_players(state.ball, message_object_status)
+		# ball collision with walls or in hole
+		if state.ball is not None:
+			ball_needs_update = state.ball.step(delta_time, cur_time)
+			if is_on_hole(state.ball.pos):
+				state.ball.pos[:] = [0,0]
+				state.ball.speed[:] = [0,0]
+				state.ball.speed_hl = 0
+				ball_needs_update = True
+			if ball_needs_update:
+				await notify_players(state.ball, message_object_status)
 
 		# bullet collision
 		for bullet_id in list(state.bullets.keys()):
@@ -347,5 +365,5 @@ async def run_state():
 ## main code
 
 loop = asyncio.get_event_loop()
-loop.run_until_complete(websockets.serve(process_client, '', 6789))
+loop.run_until_complete(websockets.serve(process_client, '', args.port))
 loop.run_until_complete(run_state())

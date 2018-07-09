@@ -133,7 +133,7 @@
 				// clear state
 				objects = {}
 				// connect to websocket
-				websocket = new WebSocket("ws://" + hostinput.value + ":6789/");
+				websocket = new WebSocket("ws://" + hostinput.value + ":40000/");
 				var name = nameinput.value;
 				websocket.onopen = function (event) {
 					websocket.send(name);
