@@ -10,8 +10,19 @@ IngameScene.show = function() {
     boxManager = new BoxManager();
     bulletManager = new BulletManager();
 
-    let tempHost = window.prompt("IMPORTANT: We are currently setting up a server, it should be ready Monday morning.\n(Alternatively you can download the server's Python 3.7 script from http://www.zyxer.net/egj5/server.zip)\n\nPlease enter server address:", "192.168.2.20");
-    let tempName = window.prompt("Please enter your name, Sir Prise:", "");
+    let tempHost = "";
+    while(tempHost === null || tempHost === "") {
+        tempHost = window.prompt("      The public server's address is:\n      ma.zyxer.net\n\n      Alternatively you can download the server's Python 3.6+ script from:\n      http://www.zyxer.net/egj5/server.zip\n\n\nPlease enter the server's address:\n ", "ma.zyxer.net");
+    }
+    let tempName = "";
+    while(tempName === null || tempName === "" || tempName.length > 10) {
+        if(tempName === null || tempName === "") {
+            tempName = window.prompt("Please enter your first name, Sir Prise:", "");
+        } else {
+            tempName = window.prompt("Your name cannot have more than 10 characters.\n\nPlease enter your first name, Sir Prise:", "");
+        }
+        tempName = tempName.trim();
+    }
     websocketManager = new WebsocketManager(tempHost, tempName);
     websocketManager.connect();
 

@@ -197,7 +197,7 @@ Panel.prototype.draw = function() {
 
     Img.drawScaled("ruleFace", 142, 34, 0.62);
 
-    this.explanation.drawPosText(17, 108, "The location of the star determines if you gain or lose points. You and other player can pick up and move the star. Ramming the player with the star will make them lose it.");
+    this.explanation.drawPosText(17, 108, "The location of the star determines if you gain or lose points. You and other players can pick up and move the star. Ramming the player carrying the star will make them lose it.");
     this.explanation.drawPosText(17, 226, "You gain points if the star is...\n- on a sector of the color wheel that is similar to your color\n- dropped at a corner that is similar to your spikiness.");
 
     c.lineWidth = 8;

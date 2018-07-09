@@ -6,16 +6,27 @@ function WebsocketManager(host, playerName) {
     this.socket = null;
     this.id = null;
 
+    this.failed = false;
+
 }
 
 
 WebsocketManager.prototype.connect = function() {
-    this.socket = new WebSocket("ws://" + this.host + ":6789/");
+    this.socket = new WebSocket("ws://" + this.host + ":40000/");
     this.socket.onopen = function() {
         websocketManager.registerPlayerName();
     };
     this.socket.onmessage = function(event) {
         websocketManager.processMessage(event);
+    };
+    this.socket.onerror = function() {
+        alert("Could not connect to the server.");
+        websocketManager.failed = true;
+    };
+    this.socket.onclose = function() {
+        if(!websocketManager.failed) {
+            alert("You were disconnected from the server.");
+        }
     };
 };
 
