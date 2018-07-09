@@ -245,7 +245,7 @@ async def run_state():
 		# loop over players
 		for websocket, player in state.players.items():
 
-			# collisions with walls
+			# check for collisions with walls, holes and stuned status change
 			if player.step(delta_time, cur_time):
 				await notify_players(player, message_object_status)
 
@@ -259,13 +259,14 @@ async def run_state():
 						player.color = float(bullet.weapon) / 6.
 					else:
 						player.last_slowdown_hit = cur_time
-						player.speed *= SLOWDOWN_FACTOR
+					player.last_time_stunned = cur_time
+					player.speed[:] = [0,0]
 					await notify_players(player, message_object_status)
 
 			# weapon firing
 			if player.weapon_fired:
 				player.weapon_fired = False
-				if player.weapon >= 0 and not player.is_stunned(cur_time) and (cur_time - player.last_time_weapon_fired) > WEAPON_COOLDOWN:
+				if player.weapon >= 0 and not player.is_stunned and (cur_time - player.last_time_weapon_fired) > WEAPON_COOLDOWN:
 					player.last_time_weapon_fired = cur_time
 					bullet = Bullet(state.next_gameobject_id, player.weapon)
 					state.next_gameobject_id += 1
@@ -309,8 +310,8 @@ async def run_state():
 					prev_other_velocity = norm(other.speed)
 					player_had_ball = player.has_ball
 					other_had_ball = other.has_ball
-					player_was_stunned = player.is_stunned(cur_time)
-					other_was_stunned = other.is_stunned(cur_time)
+					player_was_stunned = player.is_stunned
+					other_was_stunned = other.is_stunned
 
 					# handle deinterlacing
 					u = unitv(deinterlace_vector)
@@ -331,7 +332,7 @@ async def run_state():
 					if other_velocity < MIN_VELOCITY:
 						other.speed[:] = [0, 0]
 						other_velocity = 0
-					player.last_time_stunned = other.last_time_stunned = time.time()
+					player.last_time_stunned = other.last_time_stunned = cur_time
 
 					# loose ball
 					if player_had_ball:

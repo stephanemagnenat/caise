@@ -73,7 +73,8 @@
 				ctx.fillStyle = 'rgb(0,0,0)';
 				if (my_id !== null) {
 					if  (objects[my_id]) {
-						ctx.fillText(objects[my_id].weapon, 100, 10);
+						ctx.fillText("weapon: " + objects[my_id].weapon, 120, 10);
+						ctx.fillText("spikiness: " + objects[my_id].spikiness, 120, 20);
 					}
 				}
 				for (const [id, data] of Object.entries(objects)) {

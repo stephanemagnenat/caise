@@ -12,14 +12,14 @@ def _clip_field(pos, mx, my):
 		return
 	test_pos = pos * [mx, my]
 	# in side area, return
-	if test_pos[0] >= WORLD_CIRCLE_RADIUS:
+	if test_pos[0] >= WORLD_CIRCLE_RADIUS - WORLD_EPSILON:
 		return
 	# in passageway area, return
-	if test_pos[1] <= WORLD_PASSAGEWAY_HALF_WIDTH:
+	if test_pos[1] <= WORLD_PASSAGEWAY_HALF_WIDTH + WORLD_EPSILON:
 		return
 	# in circle, return
 	test_pos_length = np.linalg.norm(test_pos)
-	if test_pos_length <= WORLD_CIRCLE_RADIUS:
+	if test_pos_length <= WORLD_CIRCLE_RADIUS + WORLD_EPSILON:
 		return
 	# clipping must happen, see what is closest
 	dist_side = WORLD_CIRCLE_RADIUS - test_pos[0]
@@ -175,6 +175,7 @@ class Player(GameObject):
 		self.weapon_fired = False
 		self.last_time_weapon_fired = 0.
 		self.last_slowdown_hit = 0
+		self.is_stunned = False
 
 	def move(self, speed, factor):
 		self.speed_cmd = np.array(speed) * factor
@@ -188,34 +189,35 @@ class Player(GameObject):
 			self.last_dir = unitv(self.speed)
 
 	def step(self, dt, cur_time):
-		# can we apply speed?
+		needs_update = False
+		# previous state
+		was_stunned = self.is_stunned
 		old_speed = self.speed
-		if not self.is_stunned(cur_time):
+		# can we apply speed?
+		if not self.is_stunned:
 			factor = 1.
 			if cur_time - self.last_slowdown_hit < SLOWDOWN_DURATION:
-				factor = 0.5
+				factor = SLOWDOWN_FACTOR
 			self.set_speed(self.speed_cmd * factor)
 		# do the step
-		need_update = super(Player, self).step(dt, cur_time)
+		needs_update = super(Player, self).step(dt, cur_time)
 		# is on hole
 		if is_on_hole(self.pos):
-			print("in hole!!")
-			# TODO: find good place to respawn
 			self.pos[:] = [0,0]
 			self.speed[:] = [0,0]
 			self.speed_hl = 0.
-			# FIXME: move this in server.py
 			self.score -= FALL_IN_HOLE_POINT_LOSS
 			self.last_time_stunned = cur_time
-			need_update = True
-		# should we send update?
-		return need_update or not np.array_equal(old_speed, self.speed)
+			needs_update = True
+		# update needed if speed changed
+		needs_update = not np.array_equal(old_speed, self.speed) or needs_update
+		# update needed if stunned status changed
+		self.is_stunned = cur_time - self.last_time_stunned < STUNNED_DURATION
+		needs_update = self.is_stunned != was_stunned or needs_update
+		return needs_update
 
 	def get_object_type(self):
 		return "player"
-
-	def is_stunned(self, cur_time):
-		return cur_time - self.last_time_stunned < STUNNED_DURATION
 
 	def get_json_state(self, full):
 		json_state = super(Player, self).get_json_state(full)
@@ -227,4 +229,5 @@ class Player(GameObject):
 		json_state['spikiness'] = round(self.spikiness, 2)
 		json_state['weapon'] = self.weapon
 		json_state['power'] = self.power
+		json_state['stunned'] = self.is_stunned
 		return json_state
