@@ -204,6 +204,8 @@ class Player(GameObject):
 			self.pos[:] = [0,0]
 			self.speed[:] = [0,0]
 			self.speed_hl = 0.
+			# FIXME: move this in server.py
+			self.score -= FALL_IN_HOLE_POINT_LOSS
 			self.last_time_stunned = cur_time
 			need_update = True
 		# should we send update?
