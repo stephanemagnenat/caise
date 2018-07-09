@@ -209,6 +209,8 @@ async def run_state():
 					await notify_players(state.ball, message_object_new)
 				else:
 					state.ball.pos[:] = [0,0]
+					state.ball.speed[:] = [0,0]
+					state.ball.speed_hl = 0
 					await notify_players(state.ball, message_object_status)
 
 		# boxes
